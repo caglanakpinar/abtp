@@ -1,0 +1,25 @@
+ab_test:
+  port: 6000
+  host: 127.0.0.1
+  api_name: ab_test
+  py_file: main
+  function: main
+  params:
+    - test_groups
+    - groups
+    - date
+    - feature
+    - time_indicator
+    - time_period
+ab_test_execute:
+  port: 7000
+  host_create: 127.0.0.1
+  host: 127.0.0.1
+  api_name: ab_test_execute
+  py_file: ml_executor
+  function: start_job
+  params:
+    - job
+
+
+

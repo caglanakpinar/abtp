@@ -1,0 +1,23 @@
+test_run:
+  active: false
+  api: ml
+  browser_time: null
+  day: null
+  description: null
+  execute:
+  - params:
+      test_groups:
+      groups:
+      date:
+      feature:
+      time_indicator:
+      time_period:
+      data_source:
+      data_query_path:
+  job_end_date: null
+  job_start_date: null
+  multiprocess: true
+  receive: false
+  stop_job:
+    job: stop
+  time_zone_diffs: 0
