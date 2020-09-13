@@ -3,3 +3,15 @@ test_parameters:
     iteration: 10*20
     sample_size: 0.1*0.2
     confidence_level: 0.1*0.2
+  beta:
+    iteration: 10*20
+    sample_size: 0.1*0.2
+    confidence_level: 0.1*0.2
+  binominal:
+    iteration: 10*20
+    sample_size: 0.1*0.2
+    confidence_level: 0.1*0.2
+  poisson:
+    iteration: 10*20
+    sample_size: 0.1*0.2
+    confidence_level: 0.1*0.2

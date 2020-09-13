@@ -257,7 +257,7 @@ def request_url(url, params=None):
 def convert_feature(value):
     try:
         if value == value:
-            return float(value)
+            return value
         else:
             return None
     except Exception as e:

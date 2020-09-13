@@ -1,7 +1,7 @@
 import threading
 from multiprocessing import cpu_count
 from numpy import arange
-from pandas import DataFrame
+from pandas import DataFrame, concat
 
 from functions import *
 from utils import split_test_groups
@@ -50,8 +50,16 @@ def get_params(keys, comb):
 def rename_descriptives():
     d = {}
     for i in descriptive_columns:
-        d[i] = i[:-1] + '_control' if i[-1] == '1' else  i[:-1] + '_validation'
+        d[i] = i[:-1] + '_control' if i[-1] == '1' else i[:-1] + '_validation'
     return d
+
+
+def assign_groups_to_results(data, groups, comb):
+    if len(groups) != 0:
+        count = 0
+        for g in groups:
+            data[g] = comb[count]
+    return data
 
 
 class ABTest:
@@ -79,7 +87,7 @@ class ABTest:
         self.results = []
         self.final_results = DataFrame()
         self.h0_accept_ratio = 0
-        self.acceptance = 0
+        self.h0_acceptance = 0
 
     def get_query(self):
         count = 0
@@ -100,67 +108,62 @@ class ABTest:
     def decide_test_values(self):
         _unique = list(self.data[self.feature].unique())
         _type = type(_unique[0])
-        _min, _max = min(self.data[self.feature]), max(self.data[self.feature])
         # by default it is Normal distribution
-        if 0 <= _min <= 1 and 0 <= _max <= 1:
-            self.data_distribution = 'beta'
+        if _type != str:
+            _min, _max = min(self.data[self.feature]), max(self.data[self.feature])
+            if 0 <= _min <= 1 and 0 <= _max <= 1:
+                self.data_distribution = 'beta'
         if len(_unique) == 2:
             self.data_distribution = 'binominal'
-        if len(_unique) < 30:
+        if 2 < len(_unique) < 30:
             if _type in [str, int]:
                 self.data_distribution = 'poisson'
         if len(_unique) > 30:
             if _type == str:
                 self.data_distribution = 'gamma'
-
-    def test_execute(self):
-        if self.data_distribution == 'normal':
-            self.normal_dist_test()
-        if self.data_distribution == 'beta':
-            self.beta_dist_test()
-        if self.data_distribution == 'binominal':
-            self.binominal_dist_test()
-        if self.data_distribution == 'poisson':
-            self.poisson_dist_test()
-        if self.data_distribution == 'gamma':
-            self.gamma_dist_test()
+        print("Distribution :", self.data_distribution)
 
     def get_descriptives(self):
-        self.final_results = self.results[descriptive_columns]
-        self.final_results = self.final_results.rename(columns=rename_descriptives())
-        print()
+        self.results = self.results.rename(columns=rename_descriptives())
 
     def test_decision(self):
         self.get_descriptives()
+        print(self.results.columns)
         self.h0_accept_ratio = sum(self.results['h0_accept']) / len(self.results)
-        if self.h0_accept_ratio > 0.5:
-            self.acceptance = True
-        self.final_results['date'], self.final_results['test_result'], self.final_results['accept_Ratio'] = self.date, self.acceptance, self.h0_accept_ratio
-        print()
+        self.h0_acceptance = True if self.h0_accept_ratio > 0.5 else False
+        self.results['date'] = self.date
+        self.results['test_result'] = self.h0_acceptance
+        self.results['accept_Ratio'] = self.h0_accept_ratio
+        print(self.results.columns)
+        self.results = assign_groups_to_results(self.results, self.groups, self.comb)
+        self.final_results = self.results if self.final_results is None else concat([self.final_results, self.results])
 
-    def normal_dist_test(self):
+    def test_execute(self):
         self.results = []
         for self.param_comb in self.parameter_combinations[self.data_distribution]:
             self._params = get_params(list(hyper_conf('normal').keys()), self.param_comb)
-            print(self._params)
-            t1 = datetime.datetime.now()
             self.results += boostraping_calculation(sample1=list(self._c[self.feature]),
                                                     sample2=list(self._a[self.feature]),
                                                     iteration=self._params['iteration'],
                                                     sample_size=self._params['sample_size'],
-                                                    alpha=1-self._params['confidence_level'])
-            print(abs((t1 - datetime.datetime.now()).total_seconds()) / 60)
+                                                    alpha=1-self._params['confidence_level'],
+                                                    dist=self.data_distribution)
         self.results = DataFrame(self.results)
 
     def execute(self):
         self.decide_test_values()
         for self.comb in self.levels:
+            #try:
             print("*" * 4, "AB TEST - ", self.get_query().replace(" and ", "; ").replace(" == ", " - "), "*" * 4)
             self.f_w_data = self.data.query(self.get_query())
             print("data size :", len(self.f_w_data))
             self.get_control_and_active_data()
             self.decide_test_values()
             self.test_execute()
+
             self.test_decision()
+            #except Exception as e:
+            #    print(e)
+        print()
 
 

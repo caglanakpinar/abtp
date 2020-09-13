@@ -212,7 +212,12 @@ def get_sample_size(ratio, sample):
     return int(ratio * len(sample))
 
 
-def boostraping_calculation(sample1, sample2, iteration, sample_size, alpha):
+def calculate_lambda(values):
+    _unique, counts = np.unique(values, return_counts=True)
+    return sum(list(map(lambda x: x[0] * x[1], zip(_unique, counts)))) / len(values)
+
+
+def boostraping_calculation(sample1, sample2, iteration, sample_size, alpha, dist):
     """
     Randomly selecting samples from two population on each iteration.
     Iteratively independent test are applied each randomly selected samples
@@ -226,23 +231,60 @@ def boostraping_calculation(sample1, sample2, iteration, sample_size, alpha):
     :return: HO_accept ratio: num of accepted testes / iteration
              result data set: each iteration of test outputs of pandas data frame
     """
+    if dist == 'poisson':
+        _unique, counts = np.unique(sample1+sample2, return_counts=True)
+        _lookups = {i[0][1]: i[1] for i in list(zip(reversed(sorted(list(zip(counts, _unique)))), range(len(_unique))))}
     pval_list, h0_accept_count, test_parameters_list= [], 0, []
-
     for i in range(iteration):
+        #try:
         d = {'sample_ratio': sample_size, 'confidence_level': alpha}
-        d['size1'], d['size2'] = get_sample_size(d['sample_ratio'], sample1), get_sample_size(d['sample_ratio'], sample1)
+        d['size1'] = get_sample_size(d['sample_ratio'], sample1)
+        d['size2'] = get_sample_size(d['sample_ratio'], sample1)
+        # random.sample(sample1, sample_size)  # randomly picking samples from sample 1
         random1 = sampling(sample=sample1,
-                           sample_size=d['size1'])  # random.sample(sample1, sample_size)  # randomly picking samples from sample 1
+                           sample_size=d['size1'])
+        # random.sample(sample2, sample_size)  # randomly picking samples from sample 2
         random2 = sampling(sample=sample2,
-                           sample_size=d['size2'])  # random.sample(sample2, sample_size)  # randomly picking samples from sample 2
-        d['mean1'], d['mean2'] = np.mean(random1), np.mean(random2)
-        d['var1'], d['var2'] = np.var(random1), np.var(random2)
-        d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_t_test(d['mean1'], d['mean2'],
-                                                                                   d['var1'], d['var2'],
-                                                                                   d['size1'], d['size2'],
-                                                                                   d['confidence_level'])
+                           sample_size=d['size2'])
+        if dist == 'binominal':
+            true_value = sorted(np.unique(random1).tolist())[-1]
+            d['true_value1'] = len(list(filter(lambda x: x == true_value, random1)))
+            d['mean1'], d['mean2'] = d['true_value1'] / d['size1'], d['true_value2'] / d['size2']
+            d['true_value2'] = d['mean2'] * d['size1']
+            d['var1'] = d['mean1'] * (1 - d['mean1']) * d['size1']
+            d['var2'] = d['mean2'] * (1 - d['mean2']) * d['size2']
+        if dist == 'poisson':
+            random1, random2 = list(map(lambda x: _lookups[x], random2)), list(map(lambda x: _lookups[x], random1))
+            d['mean1'], d['mean2'] = calculate_lambda(random1), calculate_lambda(random2)
+            d['var1'], d['var2'] = d['mean1'], d['mean2']
+        if dist not in ['binominal', 'poisson']:
+            d['var1'], d['var2'] = np.var(random1), np.var(random2)
+            d['mean1'], d['mean2'] = np.mean(random1), np.mean(random2)
+        if dist == 'normal':
+            d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_t_test(d['mean1'], d['mean2'],
+                                                                                       d['var1'], d['var2'],
+                                                                                       d['size1'], d['size2'],
+                                                                                       d['confidence_level'])
+        if dist == 'beta':
+            diff_values = list((map(lambda x: x[0] - x[1], zip(random1, random2))))
+            d['diff_mean'], d['diff_var'] = np.mean(diff_values), np.var(diff_values)
+            d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_beta_test(d['diff_mean'],
+                                                                                          d['diff_var'],
+                                                                                          d['confidence_level'])
+        if dist == 'binominal':
+            d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_binomial_test(d['mean1'],
+                                                                                              d['true_value2'],
+                                                                                              d['size1'],
+                                                                                              d['confidence_level'])
+        if dist == 'poisson':
+            d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_poisson_test(d['mean1'],
+                                                                                              d['mean2'],
+                                                                                              d['confidence_level'])
         d['h0_accept'] = 1 if hypotheses_accept == 'HO ACCEPTED!' else 0
         test_parameters_list.append(d)
+        print(d)
+        #except Exception as e:
+        #    print(e)
     return test_parameters_list
 
 
@@ -262,15 +304,58 @@ def calculate_t_test(mean1, mean2, var1, var2, n1, n2, alpha):
     :return: returns p-value of test, confidence interval of test, H0 Accepted!! or H0 REjected!!
     """
     # Two Sample T Test (M0 == M1) (Two Tails)
-    t = (mean1 - mean2) / sqrt((var1 / n1) + (var2 / n2))  # t statistic calculation for two sample
-    df = n1 + n2 - 2  # degree of freedom for two sample t - set
-    pval = 1 - stats.t.sf(np.abs(t), df) * 2  # two-sided pvalue = Prob(abs(t)>tt) # p - value
-    cv = stats.t.ppf(1 - (alpha / 2), df)
-    standart_error = cv * sqrt((var1 / n1) + (var2 / n2))
-    confidence_intervals = [abs(mean1 - mean2) - standart_error, abs(mean1 - mean2) + standart_error, standart_error]
-    acception = 'HO REJECTED!' if pval < (alpha / 2) else 'HO ACCEPTED!'  # left tail
-    acception = 'HO REJECTED!' if pval > 1 - (alpha / 2) else 'HO ACCEPTED!'  # right tail
-    return pval, confidence_intervals, acception
+    try:
+        t = (mean1 - mean2) / sqrt((var1 / n1) + (var2 / n2))  # t statistic calculation for two sample
+        df = n1 + n2 - 2  # degree of freedom for two sample t - set
+        pval = 1 - stats.t.sf(np.abs(t), df) * 2  # two-sided pvalue = Prob(abs(t)>tt) # p - value
+        cv = stats.t.ppf(1 - (alpha / 2), df)
+        standart_error = cv * sqrt((var1 / n1) + (var2 / n2))
+        confidence_intervals = [abs(mean1 - mean2) - standart_error, abs(mean1 - mean2) + standart_error, standart_error]
+        acception = 'HO REJECTED!' if pval < (alpha / 2) else 'HO ACCEPTED!'  # left tail
+        acception = 'HO REJECTED!' if pval > 1 - (alpha / 2) else 'HO ACCEPTED!'  # right tail
+        return pval, confidence_intervals, acception
+    except Exception as e:
+        return None, None, None
+
+
+def calculate_beta_test(mean, var,  point):
+    try:
+        alpha = mean ** 2 * (1 - mean) / var - mean
+        beta = alpha * (1 - mean) / mean
+        p_value1 = stats.beta.cdf(float(point), alpha, beta)
+        p_value2 = 1-float(stats.beta.cdf(float(point), alpha, beta))
+        p_value = min(p_value1, p_value2) * 2
+        confidence_intervals = [p_value1, p_value2]
+        acception = 'HO ACCEPTED!' if ((1 - point) / 2) < p_value < (1 - ((1 - point) / 2)) else 'HO REJECTED!'
+        return p_value, confidence_intervals, acception
+    except Exception as e:
+        return None, None, None
+
+
+def calculate_binomial_test(mean, threatment_true_values, sample_size,  point):
+    try:
+        left_tail = stats.binom.ppf(1-point, sample_size, mean)
+        right_tail = stats.binom.ppf(point, sample_size, mean)
+        p_value = stats.binom.cdf(threatment_true_values, sample_size, mean)
+        confidence_intervals = [left_tail, right_tail]
+        acception = 'HO ACCEPTED!' if ((1 - point) / 2) < p_value < (1 - ((1 - point) / 2)) else 'HO REJECTED!'
+        return p_value, confidence_intervals, acception
+    except Exception as e:
+        return None, None, None
+
+
+def calculate_poisson_test(mu, lambda_value,  alpha):
+    try:
+        left_tail = stats.poisson.ppf(1 - alpha, mu)
+        right_tail = stats.poisson.ppf(alpha, mu)
+        p_value = stats.poisson.cdf(lambda_value, mu)
+        confidence_intervals = [left_tail, right_tail]
+        acception = 'HO ACCEPTED!' if ((1 - alpha) / 2) < p_value < (1 - ((1 - alpha) / 2)) else 'HO REJECTED!'
+        return p_value, confidence_intervals, acception
+    except Exception as e:
+        print(e)
+
+
 
 
 def get_levels(data, groups):

@@ -2,7 +2,7 @@ dash_port: 7003
 data_main_path: data
 db_connection:
   data_source: postgresql
-  db: customeranalytics
+  db: abtestdb # customeranalytics
   is_from_db: true
   password: 1234
   port: 5440
@@ -14,14 +14,6 @@ is_from_db: false
 log_main_path: logs
 model_main_path: models
 output_file_name: results
-paramters:
-  iteration: 10
-  confidence_level: 0.9
-  sample_size: 0.5
-combination_parameters:
-  iteration: 10*100*10
-  confidence_level: 0.9*0.99*0.01
-  sample_size: 0.5*1.1*0.1
 port_ranges: 6000*7000
 prediction_date: 2020-03-01
 server: /tmp/mnt

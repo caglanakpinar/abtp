@@ -77,9 +77,8 @@ def hyper_conf(var):
     directory, web, web_host = get_directory(init_directory)
     config = read_params(directory)
     return {'distribution_parameters': config['test_parameters'],
-            'normal': config['test_parameters']['normal']}[var]
-
-
+            'normal': config['test_parameters']['normal'],
+            'beta': config['test_parameters']['beta']}[var]
 
 
 alpha = 0.01
