@@ -236,55 +236,55 @@ def boostraping_calculation(sample1, sample2, iteration, sample_size, alpha, dis
         _lookups = {i[0][1]: i[1] for i in list(zip(reversed(sorted(list(zip(counts, _unique)))), range(len(_unique))))}
     pval_list, h0_accept_count, test_parameters_list= [], 0, []
     for i in range(iteration):
-        #try:
-        d = {'sample_ratio': sample_size, 'confidence_level': alpha}
-        d['size1'] = get_sample_size(d['sample_ratio'], sample1)
-        d['size2'] = get_sample_size(d['sample_ratio'], sample1)
-        # random.sample(sample1, sample_size)  # randomly picking samples from sample 1
-        random1 = sampling(sample=sample1,
-                           sample_size=d['size1'])
-        # random.sample(sample2, sample_size)  # randomly picking samples from sample 2
-        random2 = sampling(sample=sample2,
-                           sample_size=d['size2'])
-        if dist == 'binominal':
-            true_value = sorted(np.unique(random1).tolist())[-1]
-            d['true_value1'] = len(list(filter(lambda x: x == true_value, random1)))
-            d['mean1'], d['mean2'] = d['true_value1'] / d['size1'], d['true_value2'] / d['size2']
-            d['true_value2'] = d['mean2'] * d['size1']
-            d['var1'] = d['mean1'] * (1 - d['mean1']) * d['size1']
-            d['var2'] = d['mean2'] * (1 - d['mean2']) * d['size2']
-        if dist == 'poisson':
-            random1, random2 = list(map(lambda x: _lookups[x], random2)), list(map(lambda x: _lookups[x], random1))
-            d['mean1'], d['mean2'] = calculate_lambda(random1), calculate_lambda(random2)
-            d['var1'], d['var2'] = d['mean1'], d['mean2']
-        if dist not in ['binominal', 'poisson']:
-            d['var1'], d['var2'] = np.var(random1), np.var(random2)
-            d['mean1'], d['mean2'] = np.mean(random1), np.mean(random2)
-        if dist == 'normal':
-            d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_t_test(d['mean1'], d['mean2'],
-                                                                                       d['var1'], d['var2'],
-                                                                                       d['size1'], d['size2'],
-                                                                                       d['confidence_level'])
-        if dist == 'beta':
-            diff_values = list((map(lambda x: x[0] - x[1], zip(random1, random2))))
-            d['diff_mean'], d['diff_var'] = np.mean(diff_values), np.var(diff_values)
-            d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_beta_test(d['diff_mean'],
-                                                                                          d['diff_var'],
-                                                                                          d['confidence_level'])
-        if dist == 'binominal':
-            d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_binomial_test(d['mean1'],
-                                                                                              d['true_value2'],
-                                                                                              d['size1'],
+        try:
+            d = {'sample_ratio': sample_size, 'confidence_level': alpha}
+            d['size1'] = get_sample_size(d['sample_ratio'], sample1)
+            d['size2'] = get_sample_size(d['sample_ratio'], sample1)
+            # random.sample(sample1, sample_size)  # randomly picking samples from sample 1
+            random1 = sampling(sample=sample1,
+                               sample_size=d['size1'])
+            # random.sample(sample2, sample_size)  # randomly picking samples from sample 2
+            random2 = sampling(sample=sample2,
+                               sample_size=d['size2'])
+            if dist == 'binominal':
+                true_value = sorted(np.unique(random1).tolist())[-1]
+                d['true_value1'] = len(list(filter(lambda x: x == true_value, random1)))
+                d['mean1'], d['mean2'] = d['true_value1'] / d['size1'], d['true_value2'] / d['size2']
+                d['true_value2'] = d['mean2'] * d['size1']
+                d['var1'] = d['mean1'] * (1 - d['mean1']) * d['size1']
+                d['var2'] = d['mean2'] * (1 - d['mean2']) * d['size2']
+            if dist == 'poisson':
+                random1, random2 = list(map(lambda x: _lookups[x], random1)), list(map(lambda x: _lookups[x], random2))
+                d['mean1'], d['mean2'] = calculate_lambda(random1), calculate_lambda(random2)
+                d['var1'], d['var2'] = d['mean1'], d['mean2']
+            if dist not in ['binominal', 'poisson']:
+                d['var1'], d['var2'] = np.var(random1), np.var(random2)
+                d['mean1'], d['mean2'] = np.mean(random1), np.mean(random2)
+            if dist == 'normal':
+                d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_t_test(d['mean1'], d['mean2'],
+                                                                                           d['var1'], d['var2'],
+                                                                                           d['size1'], d['size2'],
+                                                                                           d['confidence_level'])
+            if dist == 'beta':
+                diff_values = list((map(lambda x: x[0] - x[1], zip(random1, random2))))
+                d['diff_mean'], d['diff_var'] = np.mean(diff_values), np.var(diff_values)
+                d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_beta_test(d['diff_mean'],
+                                                                                              d['diff_var'],
                                                                                               d['confidence_level'])
-        if dist == 'poisson':
-            d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_poisson_test(d['mean1'],
-                                                                                              d['mean2'],
-                                                                                              d['confidence_level'])
-        d['h0_accept'] = 1 if hypotheses_accept == 'HO ACCEPTED!' else 0
-        test_parameters_list.append(d)
-        print(d)
-        #except Exception as e:
-        #    print(e)
+            if dist == 'binominal':
+                d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_binomial_test(d['mean1'],
+                                                                                                  d['true_value2'],
+                                                                                                  d['size1'],
+                                                                                                  d['confidence_level'])
+            if dist == 'poisson':
+                d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_poisson_test(d['mean1'],
+                                                                                                  d['mean2'],
+                                                                                                  d['confidence_level'])
+            d['h0_accept'] = 1 if hypotheses_accept == 'HO ACCEPTED!' else 0
+            test_parameters_list.append(d)
+            print(d)
+        except Exception as e:
+            print(e)
     return test_parameters_list
 
 

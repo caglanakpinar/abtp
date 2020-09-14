@@ -111,16 +111,16 @@ class ABTest:
         # by default it is Normal distribution
         if _type != str:
             _min, _max = min(self.data[self.feature]), max(self.data[self.feature])
-            if 0 <= _min <= 1 and 0 <= _max <= 1:
+            if 0 <= _min < 1 and 0 < _max <= 1:
                 self.data_distribution = 'beta'
         if len(_unique) == 2:
             self.data_distribution = 'binominal'
         if 2 < len(_unique) < 30:
-            if _type in [str, int]:
-                self.data_distribution = 'poisson'
-        if len(_unique) > 30:
+            if _type == int:
+                if min(self.data[self.feature]) >= 0:
+                    self.data_distribution = 'poisson'
             if _type == str:
-                self.data_distribution = 'gamma'
+                self.data_distribution = 'poisson'
         print("Distribution :", self.data_distribution)
 
     def get_descriptives(self):
@@ -153,17 +153,17 @@ class ABTest:
     def execute(self):
         self.decide_test_values()
         for self.comb in self.levels:
-            #try:
-            print("*" * 4, "AB TEST - ", self.get_query().replace(" and ", "; ").replace(" == ", " - "), "*" * 4)
-            self.f_w_data = self.data.query(self.get_query())
-            print("data size :", len(self.f_w_data))
-            self.get_control_and_active_data()
-            self.decide_test_values()
-            self.test_execute()
+            try:
+                print("*" * 4, "AB TEST - ", self.get_query().replace(" and ", "; ").replace(" == ", " - "), "*" * 4)
+                self.f_w_data = self.data.query(self.get_query())
+                print("data size :", len(self.f_w_data))
+                self.get_control_and_active_data()
+                self.decide_test_values()
+                self.test_execute()
 
-            self.test_decision()
-            #except Exception as e:
-            #    print(e)
+                self.test_decision()
+            except Exception as e:
+                print(e)
         print()
 
 
