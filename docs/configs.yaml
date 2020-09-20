@@ -2,7 +2,7 @@ dash_port: 7003
 data_main_path: data
 db_connection:
   data_source: postgresql
-  db: abtestdb # customeranalytics
+  db: customeranalytics # abtestdb
   is_from_db: true
   password: 1234
   port: 5440

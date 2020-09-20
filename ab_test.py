@@ -1,5 +1,6 @@
 import threading
 from multiprocessing import cpu_count
+from os.path import exists, join
 from numpy import arange
 from pandas import DataFrame, concat
 
@@ -38,8 +39,6 @@ def is_numeric_value_an_integer(value):
 def get_params(keys, comb):
     count, params = 0, {}
     for p in keys:
-        asd = is_numeric_value_an_integer(comb[count])
-        print()
         _p = is_numeric_value_an_integer(comb[count])(comb[count])
         params[p] = _p
         count += 1
@@ -65,9 +64,9 @@ def assign_groups_to_results(data, groups, comb):
 class ABTest:
     def __init__(self, test_groups, groups=None, date=None, feature=None,
                  data_source=None, data_query_path=None, time_period=None, time_indicator=None):
-        self.date = date
+        self.date = convert_str_to_day(date)
         self.time_indicator = time_indicator
-        self.data, self.groups = data_manipulation(date=self.date,
+        self.data, self.groups = data_manipulation(date=date,
                                                    time_indicator=time_indicator,
                                                    feature=feature,
                                                    data_source=data_source,
@@ -75,7 +74,6 @@ class ABTest:
                                                    data_query_path=data_query_path)
         self.test_groups_field = test_groups
         self.test_groups_indicator = split_test_groups(self.test_groups_field, self.data)
-        self.date = date
         self.feature = feature
         self.time_period = time_period
         self.levels = get_levels(self.data, self.groups)
@@ -105,7 +103,7 @@ class ABTest:
         self._c = self.f_w_data[self.f_w_data[self.test_groups_field] == self.test_groups_indicator]
         self._a = self.f_w_data[self.f_w_data[self.test_groups_field] != self.test_groups_indicator]
 
-    def decide_test_values(self):
+    def decice_distribution(self):
         _unique = list(self.data[self.feature].unique())
         _type = type(_unique[0])
         # by default it is Normal distribution
@@ -127,43 +125,59 @@ class ABTest:
         self.results = self.results.rename(columns=rename_descriptives())
 
     def test_decision(self):
-        self.get_descriptives()
-        print(self.results.columns)
-        self.h0_accept_ratio = sum(self.results['h0_accept']) / len(self.results)
-        self.h0_acceptance = True if self.h0_accept_ratio > 0.5 else False
-        self.results['date'] = self.date
-        self.results['test_result'] = self.h0_acceptance
-        self.results['accept_Ratio'] = self.h0_accept_ratio
-        print(self.results.columns)
-        self.results = assign_groups_to_results(self.results, self.groups, self.comb)
-        self.final_results = self.results if self.final_results is None else concat([self.final_results, self.results])
+        if self.is_boostraping_calculation():
+            self.get_descriptives()
+            self.h0_accept_ratio = sum(self.results['h0_accept']) / len(self.results)
+            self.h0_acceptance = True if self.h0_accept_ratio > 0.5 else False
+            self.results['date'] = self.date
+            self.results['test_result'] = self.h0_acceptance
+            self.results['accept_Ratio'] = self.h0_accept_ratio
+            self.results = assign_groups_to_results(self.results, self.groups, self.comb)
+            self.final_results = self.results if self.final_results is None else concat([self.final_results, self.results])
+        else:
+            self.final_results = self.results
+
+    def is_boostraping_calculation(self):
+        if self.date is None:
+            return True
+        else:
+            prev_files = [conf('merged_results', additional=convert_dt_str(i, replace=True))
+                          for i in list(self.data[self.time_indicator].unique())]
+            if len(set(listdir(dirname(conf('data_main_path')))) & set(prev_files)) >= 1:
+                return False
+            else:
+                return True
 
     def test_execute(self):
         self.results = []
         for self.param_comb in self.parameter_combinations[self.data_distribution]:
             self._params = get_params(list(hyper_conf('normal').keys()), self.param_comb)
-            self.results += boostraping_calculation(sample1=list(self._c[self.feature]),
-                                                    sample2=list(self._a[self.feature]),
-                                                    iteration=self._params['iteration'],
-                                                    sample_size=self._params['sample_size'],
-                                                    alpha=1-self._params['confidence_level'],
-                                                    dist=self.data_distribution)
+            if self.is_boostraping_calculation():
+                self.results += boostraping_calculation(sample1=list(self._c[self.feature]),
+                                                        sample2=list(self._a[self.feature]),
+                                                        iteration=self._params['iteration'],
+                                                        sample_size=self._params['sample_size'],
+                                                        alpha=1-self._params['confidence_level'],
+                                                        dist=self.data_distribution)
+            else:
+                self.results += bayesian_approach(sample1=list(self._c[self.feature]),
+                                                  sample2=list(self._a[self.feature]), dist=self.data_distribution)
         self.results = DataFrame(self.results)
 
     def execute(self):
-        self.decide_test_values()
+        self.decice_distribution()
         for self.comb in self.levels:
             try:
                 print("*" * 4, "AB TEST - ", self.get_query().replace(" and ", "; ").replace(" == ", " - "), "*" * 4)
                 self.f_w_data = self.data.query(self.get_query())
                 print("data size :", len(self.f_w_data))
                 self.get_control_and_active_data()
-                self.decide_test_values()
                 self.test_execute()
-
                 self.test_decision()
+                print(self.results)
             except Exception as e:
                 print(e)
-        print()
+        self.final_results.to_csv(conf('merged_results',
+                                       additional=convert_dt_str(self.date, replace=True)), index=False, encoding='utf-8')
 
 

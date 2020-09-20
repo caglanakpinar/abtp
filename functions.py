@@ -28,7 +28,7 @@ def data_manipulation(date, time_indicator, feature, data_source, groups, data_q
                                          time_indicator=time_indicator,
                                          groups=groups,
                                          feature=feature)
-        date_features.decide_timepart_of_group()
+        date_features.date_dimension_deciding()
         data, groups = date_features.data, date_features.groups
     return data, groups
 
@@ -47,6 +47,9 @@ class TimePartFeatures:
         self.time_dimensions_accept = {d: False for d in self.time_dimensions}
         self.threshold = time_indicator_accept_threshold['threshold']
         self.accept_ratio_value = time_indicator_accept_threshold['accept_ratio_value']
+        self.data_distribution = 'normal'
+        self.results = pd.DataFrame()
+        self.h0_accept_ratio = 0
 
     def remove_similar_time_dimensions(self, part):
         accept = False
@@ -105,7 +108,26 @@ class TimePartFeatures:
             self.threshold = time_indicator_accept_threshold['threshold'] - 0.2
             self.accept_ratio_value = time_indicator_accept_threshold['accept_ratio_value'] + 0.2
 
+    def decide_distribution(self):
+        _unique = list(self.data[self.feature].unique())
+        _type = type(_unique[0])
+        # by default it is Normal distribution
+        if _type != str:
+            _min, _max = min(self.data[self.feature]), max(self.data[self.feature])
+            if 0 <= _min < 1 and 0 < _max <= 1:
+                self.data_distribution = 'beta'
+        if len(_unique) == 2:
+            self.data_distribution = 'binominal'
+        if 2 < len(_unique) < 30:
+            if _type == int:
+                if min(self.data[self.feature]) >= 0:
+                    self.data_distribution = 'poisson'
+            if _type == str:
+                self.data_distribution = 'poisson'
+        print("Distribution :", self.data_distribution)
+
     def time_dimension_decision(self, part):
+        self.decide_distribution()
         if self.remove_similar_time_dimensions(part):
             self.get_threshold(part=part)
             accept_count = 0
@@ -114,13 +136,16 @@ class TimePartFeatures:
                 sample_1 = sampling(list(self._data[self._data[part] == comb[0]][self.feature]), sample_size=100000)
                 sample_2 = sampling(list(self._data[self._data[part] == comb[1]][self.feature]), sample_size=100000)
                 iter = self.iteration_count(sample_1, sample_2)
-                h0_accept_ratio, params = boostraping_calculation(sample1=sample_1,
+                self.results = boostraping_calculation(sample1=sample_1,
                                                                   sample2=sample_2,
                                                                   iteration=iter,
                                                                   sample_size=int(
                                                                       min(len(sample_1), len(sample_2)) * s_size_ratio),
-                                                                  alpha=0.05)
-                accept_count += 1 if h0_accept_ratio < self.threshold else 0
+                                                                  alpha=0.05, dist=self.data_distribution)
+                self.results = pd.DataFrame(self.results)
+
+                self.h0_accept_ratio = sum(self.results['h0_accept']) / len(self.results)
+                accept_count += 1 if self.h0_accept_ratio < self.threshold else 0
             accept_ratio = len(combs) * self.accept_ratio_value  # 50%
             print("Time Part :", part, "Accept Treshold :", accept_ratio, "Accepted Count :", accept_count)
             return True if accept_count > accept_ratio else False
@@ -237,7 +262,7 @@ def boostraping_calculation(sample1, sample2, iteration, sample_size, alpha, dis
     pval_list, h0_accept_count, test_parameters_list= [], 0, []
     for i in range(iteration):
         try:
-            d = {'sample_ratio': sample_size, 'confidence_level': alpha}
+            d = {'sample_ratio': sample_size, 'confidence_level': alpha, 'h0_accept': 0}
             d['size1'] = get_sample_size(d['sample_ratio'], sample1)
             d['size2'] = get_sample_size(d['sample_ratio'], sample1)
             # random.sample(sample1, sample_size)  # randomly picking samples from sample 1
@@ -280,9 +305,8 @@ def boostraping_calculation(sample1, sample2, iteration, sample_size, alpha, dis
                 d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_poisson_test(d['mean1'],
                                                                                                   d['mean2'],
                                                                                                   d['confidence_level'])
-            d['h0_accept'] = 1 if hypotheses_accept == 'HO ACCEPTED!' else 0
+            d['h0_accept'] += 1 if hypotheses_accept == 'HO ACCEPTED!' else 0
             test_parameters_list.append(d)
-            print(d)
         except Exception as e:
             print(e)
     return test_parameters_list
@@ -356,6 +380,56 @@ def calculate_poisson_test(mu, lambda_value,  alpha):
         print(e)
 
 
+def bayesian_approach(sample1, sample2, dist):
+    d = {}
+    number_of_sample = max(len(sample1), len(sample2))
+    a_control, b_control, a_val, b_val = get_p_values(sample1, sample2, dist)
+    control_p_values = stats.beta.rvs(a_control, b_control, size=len(sample1))
+    validation_p_values = stats.beta.rvs(a_val, b_val, size=len(sample2))
+    sample_size = min(len(control_p_values), len(validation_p_values))
+    wins = validation_p_values[:sample_size] > control_p_values[:sample_size]
+    print(np.mean(wins))
+    return np.mean(wins)
+
+
+def bayesian_approach(sample1, sample2, dist):
+    d = {'wins': None, 'a_control': 1, 'b_control': 1, 'a_val': 1, 'b_val': 1, 'accept_Ratio': 0}
+    if dist == 'binominal':
+        true_value = sorted(np.unique(sample1+sample2).tolist())[-1]
+        sample1 = list(map(lambda x: 1 if x == true_value else 0, sample1))
+        sample2 = list(map(lambda x: 1 if x == true_value else 0, sample2))
+    if dist == 'normal':
+        mean1, mean2, var1, var2, n = np.mean(sample1), np.mean(sample2), np.var(sample1), np.var(sample2), len(sample1)
+        get_t_value = lambda x, mean, var: abs( (mean - x) / sqrt(var / n))
+        sample1 = list(map(lambda x: stats.norm.sf(get_t_value(x, mean1, var1)), sample1))
+        sample2 = list(map(lambda x: stats.norm.sf(get_t_value(x, mean2, var2)), sample2))
+    if dist == 'poisson':
+        lambda1, lambda2 = calculate_lambda(sample1), calculate_lambda(sample2)
+        sample1 = list(map(lambda x: stats.poisson.sf(x, lambda1), sample1))
+        sample2 = list(map(lambda x: stats.poisson.sf(x, lambda2), sample2))
+        a_control, b_control, a_val, b_val = 1, 1, 1, 1
+    for ind in list(range(max(len(sample1), len(sample2)))):
+        # control set a, b updating
+        try:
+            d['a_control'] += sample1[ind]  # click
+            d['b_control'] += abs(sample1[ind] - 1)  # non-click
+        except:
+            if ind + 1 == len(sample1):
+                print("out of index")
+
+        # validation set a, b updating
+        try:
+            d['a_val'] += sample2[ind]  # click
+            d['b_val'] += abs(sample2[ind] - 1)  # non-click
+        except:
+            if ind + 1 == len(sample2):
+                print("out of index")
+    control_p_values = stats.beta.rvs(d['a_control'], d['b_control'], size=len(sample1))
+    validation_p_values = stats.beta.rvs(d['a_val'], d['b_val'], size=len(sample2))
+    sample_size = min(len(control_p_values), len(validation_p_values))
+    d['wins'] = validation_p_values[:sample_size] > control_p_values[:sample_size]
+    d['accept_Ratio'] = np.mean(d['wins'])
+    return [d]
 
 
 def get_levels(data, groups):

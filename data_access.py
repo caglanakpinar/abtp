@@ -52,11 +52,13 @@ class GetData:
 
     def check_data_with_filtering(self):
         if self.data_source in ('json', 'yaml', 'csv'):
-            self.query = lambda x: x.query(self.time_indicator + " > '" + str(self.date) + "'") if self.date is not None else x
+            self.query = lambda x: x.query(self.time_indicator + " <= '" + str(self.date) + "'") if self.date is not None else x
         if self.data_source in ['mysql', 'postgresql', 'awsredshift', 'googlebigquery']:
             if self.date is not None and self.time_indicator is not None:
+                print("SELECT * FROM (" + self.data_query_path + ") AS T WHERE T." + \
+                             self.time_indicator + " <= '" + str(self.date) + "'   ")
                 self.query = "SELECT * FROM (" + self.data_query_path + ") AS T WHERE T." + \
-                             self.time_indicator + " >= '" + str(self.date) + "'   "
+                             self.time_indicator + " <= '" + str(self.date) + "'   "
 
     def query_data_source(self):
         self.check_data_with_filtering()
@@ -64,7 +66,6 @@ class GetData:
         # import data via pandas
         if self.data_source in ['mysql', 'postgresql', 'awsredshift']:
             self.get_connection()
-
             self.data = pd.read_sql(self.query + " LIMIT " + str(self.nrows) if self.nrows else self.query, self.conn)
 
         # import data via google

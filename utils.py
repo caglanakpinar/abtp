@@ -193,8 +193,16 @@ def convert_date(date=None, time=None, str=False):
     return date_merged
 
 
+def convert_date(x):
+    return datetime.datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S")
+
+
+def convert_str_to_day(x):
+    print("adsdasdssssss :", datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d"))
+    return datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d")
+
+
 def get_split_date(period=None, dates=None, params=None):
-    convert_date = lambda x:  datetime.datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S")
     model_infos = read_yaml(conf('model_main_path'), 'model_configuration.yaml')['infos']
     if period is not None:
         today = max(dates) if dates is not None else convert_date(model_infos['max_date'])
@@ -329,6 +337,13 @@ def find_web_port():
     while is_port_in_use(web_port):
         web_port += 1
     return web_port
+
+
+def convert_dt_str(date, replace=True):
+    if replace:
+        return str(date)[0:10].replace("-", "")
+    else:
+        return str(date)[0:10]
 
 
 

@@ -51,16 +51,17 @@ def read_params(directory):
     return config
 
 
-def conf(var):
+def conf(var, additional=None):
     directory, web, web_host = get_directory(init_directory)
     config = read_config(directory)
-    print(config)
+    if additional is not None:
+        config['output_file_name'] = config['output_file_name'] + "_" + additional
     return {
              'data_main_path': join(directory, "", config['data_main_path']),
              'model_main_path': join(directory, "", config['model_main_path']),
              'log_main_path': join(directory, "", config['log_main_path']),
              'docs_main_path': join(directory, "",  config['docs_main_path']),
-             'merged_results': join(directory, "", config['data_main_path'],  config['output_file_name'] + "_" + "".join(str(datetime.datetime.now())[0:10].split("-")) + ".csv"),
+             'merged_results': join(directory, "", config['data_main_path'],  config['output_file_name'] + ".csv"),
              'folder_name': folder_name,
              'available_ports': list(range(int(config['port_ranges'].split("*")[0]),
                                            int(config['port_ranges'].split("*")[1]))),
