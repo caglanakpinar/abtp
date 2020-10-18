@@ -6,7 +6,7 @@ from pandas import DataFrame, concat
 
 from functions import *
 from utils import split_test_groups
-from configs import descriptive_columns, hyper_conf
+from configs import hyper_conf, descriptive_columns
 
 
 def get_confidence_intervals(intervals):
@@ -36,13 +36,15 @@ def is_numeric_value_an_integer(value):
         return float
 
 
-def get_params(keys, comb):
+def get_params(keys, comb, data):
     count, params = 0, {}
     for p in keys:
         _p = is_numeric_value_an_integer(comb[count])(comb[count])
         params[p] = _p
         count += 1
-    print(params)
+    if len(data) < 300:
+        params['iteration'] = 1
+        params['sample_size'] = 1
     return params
 
 
@@ -62,8 +64,16 @@ def assign_groups_to_results(data, groups, comb):
 
 
 class ABTest:
-    def __init__(self, test_groups, groups=None, date=None, feature=None,
-                 data_source=None, data_query_path=None, time_period=None, time_indicator=None):
+    def __init__(self,
+                 test_groups,
+                 groups=None,
+                 date=None,
+                 feature=None,
+                 data_source=None,
+                 data_query_path=None,
+                 time_period=None,
+                 time_indicator=None,
+                 export_path=None):
         self.date = convert_str_to_day(date)
         self.time_indicator = time_indicator
         self.data, self.groups = data_manipulation(date=date,
@@ -71,7 +81,8 @@ class ABTest:
                                                    feature=feature,
                                                    data_source=data_source,
                                                    groups=groups,
-                                                   data_query_path=data_query_path)
+                                                   data_query_path=data_query_path,
+                                                   time_period=time_period)
         self.test_groups_field = test_groups
         self.test_groups_indicator = split_test_groups(self.test_groups_field, self.data)
         self.feature = feature
@@ -81,6 +92,7 @@ class ABTest:
         self.f_w_data = None
         self.data_distribution = 'normal'  # by default it is Normal distribution
         self.parameter_combinations = get_comb_params(hyper_conf('distribution_parameters'))
+        self.export_path = export_path
         self.comb, self.param_comb, self._params = None, None, {}
         self.results = []
         self.final_results = DataFrame()
@@ -135,23 +147,26 @@ class ABTest:
             self.results = assign_groups_to_results(self.results, self.groups, self.comb)
             self.final_results = self.results if self.final_results is None else concat([self.final_results, self.results])
         else:
+            print(self.results.head())
             self.final_results = self.results
 
     def is_boostraping_calculation(self):
         if self.date is None:
             return True
         else:
-            prev_files = [conf('merged_results', additional=convert_dt_str(i, replace=True))
-                          for i in list(self.data[self.time_indicator].unique())]
-            if len(set(listdir(dirname(conf('data_main_path')))) & set(prev_files)) >= 1:
-                return False
-            else:
+            if self.export_path is None:
                 return True
+            else:
+                files = check_result_data_exits(self.export_path)
+                if len(files) >= 1:
+                    return True
+                else:
+                    return False
 
     def test_execute(self):
         self.results = []
         for self.param_comb in self.parameter_combinations[self.data_distribution]:
-            self._params = get_params(list(hyper_conf('normal').keys()), self.param_comb)
+            self._params = get_params(list(hyper_conf('normal').keys()), self.param_comb, self.data)
             if self.is_boostraping_calculation():
                 self.results += boostraping_calculation(sample1=list(self._c[self.feature]),
                                                         sample2=list(self._a[self.feature]),
@@ -174,10 +189,8 @@ class ABTest:
                 self.get_control_and_active_data()
                 self.test_execute()
                 self.test_decision()
-                print(self.results)
             except Exception as e:
-                print(e)
-        self.final_results.to_csv(conf('merged_results',
-                                       additional=convert_dt_str(self.date, replace=True)), index=False, encoding='utf-8')
+               print(e)
+
 
 

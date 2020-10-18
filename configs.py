@@ -34,6 +34,7 @@ def get_directory(path):
 
 
 def read_config(directory):
+
     with open(join(directory, "docs", "configs.yaml")) as file:
         config = yaml.full_load(file)
     return config
@@ -45,29 +46,9 @@ def read_params(directory):
     return config
 
 
-def read_params(directory):
-    with open(join(directory, "docs", "test_parameters.yaml")) as file:
-        config = yaml.full_load(file)
-    return config
-
-
-def conf(var, additional=None):
-    directory, web, web_host = get_directory(init_directory)
-    config = read_config(directory)
-    if additional is not None:
-        config['output_file_name'] = config['output_file_name'] + "_" + additional
+def conf(var):
+    config = read_config(abspath(__file__).split("configs.py")[0])
     return {
-             'data_main_path': join(directory, "", config['data_main_path']),
-             'model_main_path': join(directory, "", config['model_main_path']),
-             'log_main_path': join(directory, "", config['log_main_path']),
-             'docs_main_path': join(directory, "",  config['docs_main_path']),
-             'merged_results': join(directory, "", config['data_main_path'],  config['output_file_name'] + ".csv"),
-             'folder_name': folder_name,
-             'available_ports': list(range(int(config['port_ranges'].split("*")[0]),
-                                           int(config['port_ranges'].split("*")[1]))),
-             'directory': directory,
-             'web_port': web,
-             'web_host': web_host,
              'config': {c: config[c] for c in config
                         if c not in
                         ['data_main_path', 'model_main_path', 'log_main_path', 'docs_main_path', 'folder_name']}
@@ -75,8 +56,7 @@ def conf(var, additional=None):
 
 
 def hyper_conf(var):
-    directory, web, web_host = get_directory(init_directory)
-    config = read_params(directory)
+    config = read_params(abspath(__file__).split("configs.py")[0])
     return {'distribution_parameters': config['test_parameters'],
             'normal': config['test_parameters']['normal'],
             'beta': config['test_parameters']['beta']}[var]
@@ -85,12 +65,6 @@ def hyper_conf(var):
 alpha = 0.01
 iteration = 30
 boostrap_ratio = 0.5
-treshold = {'lower_bound': 50, 'upper_bound': 2000}
-cores = 4
-min_weeks = 4
-accepted_weeks_after_store_open = 5
-accepted_null_ratio = 0.4
-year_seconds = 366 * 24 * 60 * 60
 time_dimensions = ['year', 'quarter', 'month', 'week', 'week_part', 'week_day', 'day_part', 'hour', 'min', 'second']
 weekdays = ['Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays', 'Sundays']
 folder_name = 'anomaly_detection_framework'

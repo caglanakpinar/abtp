@@ -4,13 +4,14 @@ import pandas as pd
 import random
 from math import sqrt
 from scipy import stats
+from dateutil.parser import parse
 
 from data_access import GetData
 from utils import *
 from configs import time_dimensions, day_of_year, time_indicator_accept_threshold, s_size_ratio
 
 
-def data_manipulation(date, time_indicator, feature, data_source, groups, data_query_path):
+def data_manipulation(date, time_indicator, feature, data_source, groups, data_query_path, time_period):
     data_process = GetData(data_source=data_source,
                            data_query_path=data_query_path,
                            time_indicator=time_indicator,
@@ -30,6 +31,9 @@ def data_manipulation(date, time_indicator, feature, data_source, groups, data_q
                                          feature=feature)
         date_features.date_dimension_deciding()
         data, groups = date_features.data, date_features.groups
+        if time_period is not None:
+            groups += [time_period]
+            data[time_period] = data[time_indicator].apply(lambda x: date_part(str(x), time_period))
     return data, groups
 
 
@@ -271,6 +275,9 @@ def boostraping_calculation(sample1, sample2, iteration, sample_size, alpha, dis
             # random.sample(sample2, sample_size)  # randomly picking samples from sample 2
             random2 = sampling(sample=sample2,
                                sample_size=d['size2'])
+            if dist == 'normal':
+                d['mean1'], d['mean2'] = np.mean(random1), np.mean(random2)
+                d['var1'], d['var2'] = np.var(random1), np.var(random2)
             if dist == 'binominal':
                 true_value = sorted(np.unique(random1).tolist())[-1]
                 d['true_value1'] = len(list(filter(lambda x: x == true_value, random1)))
@@ -286,6 +293,9 @@ def boostraping_calculation(sample1, sample2, iteration, sample_size, alpha, dis
                 d['var1'], d['var2'] = np.var(random1), np.var(random2)
                 d['mean1'], d['mean2'] = np.mean(random1), np.mean(random2)
             if dist == 'normal':
+                print(sample1)
+                print(sample2)
+                print(d)
                 d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_t_test(d['mean1'], d['mean2'],
                                                                                            d['var1'], d['var2'],
                                                                                            d['size1'], d['size2'],
@@ -306,6 +316,8 @@ def boostraping_calculation(sample1, sample2, iteration, sample_size, alpha, dis
                                                                                                   d['mean2'],
                                                                                                   d['confidence_level'])
             d['h0_accept'] += 1 if hypotheses_accept == 'HO ACCEPTED!' else 0
+            print(d)
+            print(dist)
             test_parameters_list.append(d)
         except Exception as e:
             print(e)
@@ -429,6 +441,7 @@ def bayesian_approach(sample1, sample2, dist):
     sample_size = min(len(control_p_values), len(validation_p_values))
     d['wins'] = validation_p_values[:sample_size] > control_p_values[:sample_size]
     d['accept_Ratio'] = np.mean(d['wins'])
+    d['wins'] = "_".join([str(i) for i in d['wins']])
     return [d]
 
 

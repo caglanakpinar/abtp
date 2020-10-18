@@ -17,7 +17,7 @@ import errno
 import urllib
 import time
 from os import listdir
-from os.path import dirname, join
+from os.path import dirname, join, abspath
 import pandas as pd
 
 try:
@@ -167,6 +167,8 @@ def date_part(date, part):
         return date.min
     if part == 'second':
         return date.second
+    if part == 'day':
+        return str(date)[0:10]
 
 
 def get_quarter(d):
@@ -198,7 +200,6 @@ def convert_date(x):
 
 
 def convert_str_to_day(x):
-    print("adsdasdssssss :", datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d"))
     return datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d")
 
 
@@ -344,6 +345,32 @@ def convert_dt_str(date, replace=True):
         return str(date)[0:10].replace("-", "")
     else:
         return str(date)[0:10]
+
+
+def check_result_data_exits(path):
+    file = []
+    for f in listdir(dirname(join(path, ""))):
+        if len(f.split("_")) != 1:
+            if f.split("_")[-1] == "results.csv":
+                file += [f]
+    return file
+
+
+def get_result_file_name(path, date, time_period=None):
+    if time_period is None:
+        if date is not None:
+            return join(path, convert_dt_str(date, replace=True) + "_results.csv")
+        else:
+            return join(path,  "results.csv")
+    else:
+        if date is not None:
+            return join(path, date[0:19].replace("-", "").replace(" ", "") + "_results.csv")
+        else:
+            return join(path,  time_period + "_results.csv")
+
+
+def get_folder_path():
+    return abspath(__file__)
 
 
 
