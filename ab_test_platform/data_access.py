@@ -3,9 +3,12 @@ from dateutil.parser import parse
 from os.path import join
 import os
 
-
-from configs import conf
-from utils import read_yaml, read_write_to_json, convert_feature
+try:
+    from configs import conf
+    from utils import read_yaml, read_write_to_json, convert_feature
+except Exception as e:
+    from .configs import conf
+    from .utils import read_yaml, read_write_to_json, convert_feature
 
 
 class GetData:

@@ -1,10 +1,16 @@
 from os.path import join
 import subprocess
 
-from main import main
-from data_access import GetData
-from utils import get_folder_path, write_yaml, read_yaml
-from configs import conf
+try:
+    from main import main
+    from data_access import GetData
+    from utils import get_folder_path, write_yaml, read_yaml
+    from configs import conf
+except Exception as e:
+    from .main import main
+    from .data_access import GetData
+    from .utils import get_folder_path, write_yaml, read_yaml
+    from .configs import conf
 
 
 class ABTest:

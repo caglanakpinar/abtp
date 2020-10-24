@@ -6,3 +6,7 @@
 *.ipynb
 *.csv
 .idea
+build
+data
+a_b_test_platform.egg-info
+dist

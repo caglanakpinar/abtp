@@ -7,8 +7,8 @@ with open("README.md", "r") as fh:
 
 
 setuptools.setup(
-    name="a-b_test_platform",
-    version="0.0.1",
+    name="abtest",
+    version="0.0.2",
     author="Caglan Akpinar",
     author_email="cakpinar23@gmail.com",
     description="allows to run AB Test for any problem, automatically decides which test must be applied and represents the results",
@@ -16,15 +16,15 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     keywords='A-B Test Control - Active Group Test AB Test via Bayesian Approach',
     packages= find_packages(exclude='__pycache__'),
-    py_modules=['docs', 'main.py', 'functions.py', 'data_access.py', 'scheduler_service.py',
-                'utils.py', 'executor.py', 'configs.py', 'ab_test.py'],
+    py_modules=['ab_test_platform/docs', 'ab_test_platform'],
     install_requires=[
                       "numpy >= 1.18.1",
                       "pandas >= 0.25.3",
                       "scipy >= 1.4.1 ",
                       "schedule >= 0.6.0",
                       "PyYAML",
-                      "psycopg2 >= 2.8.5",
+                      "psycopg2-binary",
+                      # "psycopg2 >= 2.8.5",
                       "python-dateutil >= 2.8.1",
                       "google-cloud-bigquery",
                       "mysql-connector-python",
@@ -40,5 +40,5 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3',
 )

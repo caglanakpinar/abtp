@@ -4,9 +4,14 @@ from os.path import exists, join
 from numpy import arange
 from pandas import DataFrame, concat
 
-from functions import *
-from utils import split_test_groups
-from configs import hyper_conf, descriptive_columns
+try:
+    from functions import *
+    from utils import split_test_groups, convert_str_to_day
+    from configs import hyper_conf, descriptive_columns
+except Exception as e:
+    from .functions import *
+    from .utils import split_test_groups, convert_str_to_day
+    from .configs import hyper_conf, descriptive_columns
 
 
 def get_confidence_intervals(intervals):
@@ -68,7 +73,7 @@ def assign_groups_to_results(data, groups, comb):
     return data
 
 
-class ABTest:
+class Test:
     def __init__(self,
                  test_groups,
                  groups=None,

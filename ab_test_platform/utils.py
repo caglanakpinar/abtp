@@ -22,7 +22,7 @@ import pandas as pd
 
 try:
     from .configs import weekdays, conf, boostrap_ratio, web_port_default
-except:
+except Exception as e:
     from configs import weekdays, conf, boostrap_ratio, web_port_default
 
 

@@ -6,8 +6,12 @@ from dateutil.parser import parse
 from os.path import abspath, dirname
 from os import listdir
 
-from main import main
-from utils import date_part
+try:
+    from main import main
+    from utils import date_part
+except Exception as e:
+    from .main import main
+    from .utils import date_part
 
 
 def get_schedule(time_period):

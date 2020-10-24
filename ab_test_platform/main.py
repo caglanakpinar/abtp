@@ -2,8 +2,15 @@ import sys
 from os.path import abspath
 import argparse
 
-from ab_test import ABTest
-from utils import kill_process_with_name, url_string, get_result_file_name
+try:
+    from ab_test import Test
+except Exception as e:
+    from .ab_test import Test
+
+try:
+    from utils import kill_process_with_name, url_string, get_result_file_name
+except Exception as e:
+    from .utils import kill_process_with_name, url_string, get_result_file_name
 
 
 def main(test_groups, groups=None, date=None, feature=None, data_source=None,
@@ -13,7 +20,8 @@ def main(test_groups, groups=None, date=None, feature=None, data_source=None,
                          'data_query_path': data_query_path, 'time_period': time_period,
                          "time_indicator": time_indicator, "export_path": export_path, "parameters": parameters}
           )
-    ab_test = ABTest(test_groups=test_groups, groups=groups, date=date, feature=feature,
+    print(Test.__init__)
+    ab_test = Test(test_groups=test_groups, groups=groups, date=date, feature=feature,
                      data_source=data_source, data_query_path=url_string(data_query_path),
                      time_period=time_period, time_indicator=time_indicator, export_path=export_path, parameters=parameters)
     ab_test.execute()

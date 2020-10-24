@@ -1,43 +1,50 @@
 
 # A - B Test Platform
 
+---------------------------
+
+[![PyPI version](https://badge.fury.io/py/abtest.svg)](https://badge.fury.io/py/abtest)
+[![GitHub license](https://img.shields.io/github/license/caglanakpinar/abtp)](https://github.com/caglanakpinar/abtp/blob/master/LICENSE)
+
+----------------------------
+
 ##### Key Features
 
--   allows you to find the Dsitribution of the testing values.
--   Time period detection (year, quarter, month, week, week-part, day, hour) adding as subgroups
--   subgroups og testing is available
+-   allows you to find the Distribution of the testing values.
+-   Time period detection (year, quarter, month, week, week-part, day, hour) adding as subgroups.
+-   subgroups of testing are available
 -   schedule your test daily, monthly, weekly, hourly.
--   Confidence level can aoutmatically assigns and tests for each Confidencce levels (e.g. 0.01, 0.05 appying for testes individually)
+-   The confidence level can automatically assign and tests for each Confidence levels (e.g. 0.01, 0.05 applying for testes individually)i
 
 ##### Running Platform
 
 - **Test Parameters**
     
-    ***test_groups :*** if there are any sub-groups of the active and control group, framework can run Test results for each subgroups. This parameter must be the column name which exits on given data set for both Active and Control groups.
+    ***test_groups :*** if there are any sub-groups of the active and control group, the framework can run Test results for each subgroup. This parameter must be the column name that exists on the given data set for both Active and Control groups.
     
-    **groups :*** The column name represents active and control group flag.
+    **groups :*** The column name represents the active and controls group flag.
     
-    **date :*** If it needs, it is able to be trigger related to a date that data is goint to be filtered as before the given date.
+    **date :*** If it needs, it is able to be trigger related to a date that data is going to be filtered as before the given date.
     
-    **feature :*** the column name that represents actual values that are tested according to two main groups.
+    **feature :*** The column name that represents actual values that are tested according to two main groups.
     
-    **data_source :*** The location where the data is stored or the query (checck data source for details).
+    **data_source :*** The location where the data is stored or the query (check data source for details).
     
-    **data_query_path :*** type of data source to import data to the platform (optinal Ms SQL, PostgreSQL, AWS RedShift, Google BigQuery, csv, json, pickle).
+    **data_query_path :*** Type of data source to import data to the platform (optional Ms SQL, PostgreSQL, AWS RedShift, Google BigQuery, csv, json, pickle).
     
-    **time_period :*** additional time period which c(optinal year, month, day, hour, week, week day, day part quarter) (check details time periods).
+    **time_period :*** The additional time period which (optional year, month, day, hour, week, week day, day part quarter) (check details time periods).
     
-    **time_indicator :*** If test is running periodicly, the column name that related to time must be assigned.
+    **time_indicator :*** If test is running periodically, the column name that related to time must be assigned.
     
     **export_path :*** Output results of export as csv format (optional).
     
     **connector :*** if there is a connection paramters as user, pasword, host port, this allows us to assign it as dictionary format (e.g {"user": ***, "pw": ****}).
     
-    **confidence_level :*** Confidence level of test results (list or float).
+    **confidence_level :*** The Confidence level of test results (list or float).
     
-    **boostrap_sample_ratio :*** Boostraping randomly selected sample data raio (between 0 and 1).
+    **boostrap_sample_ratio :*** Bootstrapping randomly selected sample data rate (between 0 and 1).
     
-    *boostrap_iteration :*** Number of iteration for boostraping.
+    *boostrap_iteration :*** Number of iteration for bootstrapping.
     
     
     

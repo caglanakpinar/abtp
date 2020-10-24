@@ -6,9 +6,14 @@ from math import sqrt
 from scipy import stats
 from dateutil.parser import parse
 
-from data_access import GetData
-from utils import *
-from configs import time_dimensions, day_of_year, time_indicator_accept_threshold, s_size_ratio
+try:
+    from data_access import GetData
+    from utils import *
+    from configs import time_dimensions, day_of_year, time_indicator_accept_threshold, s_size_ratio
+except Exception as e:
+    from .data_access import GetData
+    from .utils import *
+    from .configs import time_dimensions, day_of_year, time_indicator_accept_threshold, s_size_ratio
 
 
 def data_manipulation(date, time_indicator, feature, data_source, groups, data_query_path, time_period):

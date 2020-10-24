@@ -1,0 +1,110 @@
+Metadata-Version: 2.1
+Name: abtest
+Version: 0.0.2
+Summary: allows to run AB Test for any problem, automatically decides which test must be applied and represents the results
+Home-page: https://github.com/caglanakpinar/abtp
+Author: Caglan Akpinar
+Author-email: cakpinar23@gmail.com
+License: UNKNOWN
+Description: 
+        # A - B Test Platform
+        
+        ---------------------------
+        
+        [![PyPI version](https://badge.fury.io/py/abtest.svg)](https://badge.fury.io/py/abtest)
+        [![GitHub license](https://img.shields.io/github/license/caglanakpinar/abtp)](https://github.com/caglanakpinar/abtp/blob/master/LICENSE)
+        
+        ----------------------------
+        
+        ##### Key Features
+        
+        -   allows you to find the Distribution of the testing values.
+        -   Time period detection (year, quarter, month, week, week-part, day, hour) adding as subgroups.
+        -   subgroups of testing are available
+        -   schedule your test daily, monthly, weekly, hourly.
+        -   The confidence level can automatically assign and tests for each Confidence levels (e.g. 0.01, 0.05 applying for testes individually)i
+        
+        ##### Running Platform
+        
+        - **Test Parameters**
+            
+            ***test_groups :*** if there are any sub-groups of the active and control group, the framework can run Test results for each subgroup. This parameter must be the column name that exists on the given data set for both Active and Control groups.
+            
+            **groups :*** The column name represents the active and controls group flag.
+            
+            **date :*** If it needs, it is able to be trigger related to a date that data is going to be filtered as before the given date.
+            
+            **feature :*** The column name that represents actual values that are tested according to two main groups.
+            
+            **data_source :*** The location where the data is stored or the query (check data source for details).
+            
+            **data_query_path :*** Type of data source to import data to the platform (optional Ms SQL, PostgreSQL, AWS RedShift, Google BigQuery, csv, json, pickle).
+            
+            **time_period :*** The additional time period which (optional year, month, day, hour, week, week day, day part quarter) (check details time periods).
+            
+            **time_indicator :*** If test is running periodically, the column name that related to time must be assigned.
+            
+            **export_path :*** Output results of export as csv format (optional).
+            
+            **connector :*** if there is a connection paramters as user, pasword, host port, this allows us to assign it as dictionary format (e.g {"user": ***, "pw": ****}).
+            
+            **confidence_level :*** The Confidence level of test results (list or float).
+            
+            **boostrap_sample_ratio :*** Bootstrapping randomly selected sample data rate (between 0 and 1).
+            
+            *boostrap_iteration :*** Number of iteration for bootstrapping.
+            
+            
+            
+        
+        ##### Data Source
+        Here is the data source that you can connect with your SQL queries:
+        
+        - Ms SQL Server
+        - PostgreSQL
+        - AWS RedShift
+        - Google BigQuery
+        - .csv
+        - .json
+        - pickle
+            
+        -   ***Connection PostgreSQL - MS SQL - AWS RedShift***
+            
+                data_source = "postgresql"
+                connector = {"user": ***, "password": ***, "server": "127.0.0.1", 
+                             "port": "5440", "db": ***}
+                data_main_path ="""
+                                   SELECT                             
+                                    groups,
+                                    test_groups
+                                    feature,
+                                    time_indicator
+                                   FROM table
+                               """
+                
+                
+        -   ***Connection Google BigQuery***
+                
+                data_source = "googlebigquery"
+                connector = {"data_main_path": "./json_file_where_you_stored", 
+                             "db": "flash-clover-*********.json"}
+                data_main_path ="""
+                           SELECT                             
+                            groups,
+                            test_groups
+                            feature,
+                            time_indicator
+                           FROM table
+                       """
+        
+        -   **Connection csv - .json - .pickle** 
+                
+                data_source = "csv"
+                data_main_path = "./data_where_you_store/***.csv"
+Keywords: A-B Test Control - Active Group Test AB Test via Bayesian Approach
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3
+Description-Content-Type: text/markdown
