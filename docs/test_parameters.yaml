@@ -1,17 +1,17 @@
 test_parameters:
   normal:
     iteration: 10*20
-    sample_size: 0.1*0.2
-    confidence_level: 0.1*0.2
+    sample_size: 0.1*0.4
+    confidence_level: 0.05*0.15
   beta:
     iteration: 10*20
-    sample_size: 0.1*0.2
-    confidence_level: 0.1*0.2
+    sample_size: 0.1*0.4
+    confidence_level: 0.05*0.15
   binominal:
     iteration: 10*20
-    sample_size: 0.1*0.2
-    confidence_level: 0.1*0.2
+    sample_size: 0.1*0.4
+    confidence_level: 0.05*0.15
   poisson:
     iteration: 10*20
-    sample_size: 0.1*0.2
-    confidence_level: 0.1*0.2
+    sample_size: 0.1*0.4
+    confidence_level: 0.05*0.15

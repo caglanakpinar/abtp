@@ -200,7 +200,10 @@ def convert_date(x):
 
 
 def convert_str_to_day(x):
-    return datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d")
+    try:
+        return datetime.datetime.strptime(str(x)[0:10], "%Y-%m-%d")
+    except Exception as e:
+        return None
 
 
 def get_split_date(period=None, dates=None, params=None):
@@ -370,7 +373,7 @@ def get_result_file_name(path, date, time_period=None):
 
 
 def get_folder_path():
-    return abspath(__file__)
+    return abspath(__file__).split("utils.py")[0]
 
 
 

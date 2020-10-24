@@ -17,14 +17,19 @@ def get_comb_params(distributions):
     comb_arrays = {}
     for d in distributions:
         _params = distributions[d]
+        print(_params)
         _keys = list(distributions[d].keys())
         arrays = []
         for p in _params:
-            arrays.append(
-                          arange(float(_params[p].split("*")[0]),
-                                 float(_params[p].split("*")[1]),
-                                 float(_params[p].split("*")[0])).tolist()
-                )
+            print(p)
+            if "*" in list(_params[p]):
+                arrays.append(
+                              arange(float(_params[p].split("*")[0]),
+                                     float(_params[p].split("*")[1]),
+                                     float(_params[p].split("*")[0])).tolist()
+                    )
+            else:
+                arrays.append([float(i) for i in _params[p].split("_")])
         comb_arrays[d] = list(product(*arrays))
     return comb_arrays
 
@@ -73,7 +78,8 @@ class ABTest:
                  data_query_path=None,
                  time_period=None,
                  time_indicator=None,
-                 export_path=None):
+                 export_path=None,
+                 parameters=None):
         self.date = convert_str_to_day(date)
         self.time_indicator = time_indicator
         self.data, self.groups = data_manipulation(date=date,
@@ -87,11 +93,13 @@ class ABTest:
         self.test_groups_indicator = split_test_groups(self.test_groups_field, self.data)
         self.feature = feature
         self.time_period = time_period
+        self.time_indicator_values = None
+        self.tp = None
         self.levels = get_levels(self.data, self.groups)
         self._c, self._a = None, None
         self.f_w_data = None
         self.data_distribution = 'normal'  # by default it is Normal distribution
-        self.parameter_combinations = get_comb_params(hyper_conf('distribution_parameters'))
+        self.parameter_combinations = get_comb_params(hyper_conf('distribution_parameters') if parameters is None else parameters)
         self.export_path = export_path
         self.comb, self.param_comb, self._params = None, None, {}
         self.results = []
@@ -108,14 +116,25 @@ class ABTest:
             else:
                 query += self.groups[count] + " == '" + str(c) + "' and "
             count += 1
+
+        if not self.get_time_period_of_time_line():
+            if self.time_period == 'day':
+                print("yessssss")
+                query += self.time_indicator + " <= '" + str(self.tp) + "' and "
+            else:
+                if self.time_period in ["year", "month", "week", "week_day", "hour"]:
+                    query += self.time_period + " == " + str(self.tp) + " and "
+                if self.time_period in ["quarter", "week_part", "day_part"]:
+                    query += self.time + " == '" + str(self.tp) + "' and "
         query = query[:-4]
+        print(query)
         return query
 
     def get_control_and_active_data(self):
         self._c = self.f_w_data[self.f_w_data[self.test_groups_field] == self.test_groups_indicator]
         self._a = self.f_w_data[self.f_w_data[self.test_groups_field] != self.test_groups_indicator]
 
-    def decice_distribution(self):
+    def decide_distribution(self):
         _unique = list(self.data[self.feature].unique())
         _type = type(_unique[0])
         # by default it is Normal distribution
@@ -179,18 +198,39 @@ class ABTest:
                                                   sample2=list(self._a[self.feature]), dist=self.data_distribution)
         self.results = DataFrame(self.results)
 
-    def execute(self):
-        self.decice_distribution()
-        for self.comb in self.levels:
-            try:
+    def check_for_time_period(self):
+        return True if self.time_period is None else False
+
+    def get_time_period_of_time_line(self):
+        if not self.check_for_time_period():
+            self.time_indicator_values = sorted(self.data[self.time_period].unique())
+
+    def run_test(self):
+        try:
+            self.f_w_data = self.data.query(self.get_query())
+            if len(self.f_w_data) != 0:
                 print("*" * 4, "AB TEST - ", self.get_query().replace(" and ", "; ").replace(" == ", " - "), "*" * 4)
-                self.f_w_data = self.data.query(self.get_query())
                 print("data size :", len(self.f_w_data))
                 self.get_control_and_active_data()
                 self.test_execute()
                 self.test_decision()
-            except Exception as e:
-               print(e)
+        except Exception as e:
+            print(e)
+
+    def execute(self):
+        print("time period :", self.time_period)
+        self.decide_distribution()
+        self.get_time_period_of_time_line()
+        for self.comb in self.levels:
+            if self.check_for_time_period():
+                self.run_test()
+            else:
+                for self.tp in self.time_indicator_values:
+                    print(self.tp)
+                    self.run_test()
+
+
+
 
 
 

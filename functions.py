@@ -32,7 +32,6 @@ def data_manipulation(date, time_indicator, feature, data_source, groups, data_q
         date_features.date_dimension_deciding()
         data, groups = date_features.data, date_features.groups
         if time_period is not None:
-            groups += [time_period]
             data[time_period] = data[time_indicator].apply(lambda x: date_part(str(x), time_period))
     return data, groups
 
@@ -293,9 +292,6 @@ def boostraping_calculation(sample1, sample2, iteration, sample_size, alpha, dis
                 d['var1'], d['var2'] = np.var(random1), np.var(random2)
                 d['mean1'], d['mean2'] = np.mean(random1), np.mean(random2)
             if dist == 'normal':
-                print(sample1)
-                print(sample2)
-                print(d)
                 d['pval'], d['confidence_intervals'], hypotheses_accept = calculate_t_test(d['mean1'], d['mean2'],
                                                                                            d['var1'], d['var2'],
                                                                                            d['size1'], d['size2'],
@@ -316,8 +312,6 @@ def boostraping_calculation(sample1, sample2, iteration, sample_size, alpha, dis
                                                                                                   d['mean2'],
                                                                                                   d['confidence_level'])
             d['h0_accept'] += 1 if hypotheses_accept == 'HO ACCEPTED!' else 0
-            print(d)
-            print(dist)
             test_parameters_list.append(d)
         except Exception as e:
             print(e)
