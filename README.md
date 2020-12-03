@@ -93,3 +93,90 @@ Here is the data source that you can connect with your SQL queries:
         
         data_source = "csv"
         data_main_path = "./data_where_you_store/***.csv"
+        
+   
+#### Runing ABTest
+    
+    groups = "groups"
+    test_groups = "test_groups"
+    feature = "feature"
+    data_source = "postgresql"
+    connector = {"user": ***, "password": ***, "server": "127.0.0.1", 
+    "port": ****, "db": ***}
+    data_main_path ="""
+                    SELECT                             
+                    groups,
+                    test_groups
+                    feature,
+                    time_indicator
+                    FROM table
+    """
+    confidence_level = [0.01, 0.05]
+    boostrap_ratio = [0.1, 0.2]
+    export_path =  abspath("") + '/data'
+    
+    ab = ABTest(test_groups=test_groups, 
+            groups=groups, 
+            feature=feature, 
+            data_source=data_source,
+            data_query_path=query, 
+            time_period=time_period, 
+            time_indicator=time_indicator,
+            time_schedule=time_schedule,
+            export_path=export_path, 
+            connector=connector, 
+            confidence_level=confidence_level, 
+            boostrap_sample_ratio=boostrap_ratio)
+    ab.ab_test_init()
+    
+    
+#### Schedule
+
+Platform allows you to schedule your ABTest weekly, daily, monthly, hourly, every Monday, Tuesday, ..., Sunday.
+    
+***time_schedule :*** Additional to ABTest parameters, this parameter allows you to fix the time period.
+-   daily schedule: Daily
+-   monthly schedule: Monthly
+-   day of week schedule: Monday - Mondays, Tuesday - Tuesdays, Wednesday - Wednesdays
+-   hourly schedule: Hourly from ab_test_platform.executor import ABTest 
+
+        groups = "groups"
+        test_groups = "test_groups"
+        feature = "feature"
+        data_source = "postgresql"
+        data_source = "postgresql"
+        connector = {"user": ***, "password": ***, "server": "127.0.0.1", 
+        "port": ****, "db": ***}
+        data_main_path ="""
+                            SELECT                             
+                            groups,
+                            test_groups
+                            feature,
+                            time_indicator
+                            FROM table
+        """
+        confidence_level = [0.01, 0.05]
+        boostrap_ratio = [0.1, 0.2]
+        export_path =  abspath("") + '/data'
+        
+        ab = ABTest(test_groups=test_groups, 
+                    groups=groups, 
+                    feature=feature, 
+                    data_source=data_source,
+                    data_query_path=query, 
+                    time_period=time_period, 
+                    time_indicator=time_indicator,
+                    time_schedule=time_schedule,
+                    export_path=export_path, 
+                    connector=connector, 
+                    confidence_level=confidence_level, 
+                    boostrap_sample_ratio=boostrap_ratio)
+        ab.schedule_test()
+                    
+        
+    Every 1 hour at 00:50:00 do run_ab_test() (last run: [never], next run: 2020-12-03 22:50:00)
+
+
+    
+
+    
