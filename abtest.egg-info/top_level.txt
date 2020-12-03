@@ -1,2 +1,0 @@
-ab_test_platform
-ab_test_platform/docs
