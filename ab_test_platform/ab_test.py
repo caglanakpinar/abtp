@@ -70,6 +70,7 @@ def assign_groups_to_results(data, groups, comb):
         count = 0
         for g in groups:
             data[g] = comb[count]
+            count += 1
     return data
 
 
