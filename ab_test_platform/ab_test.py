@@ -167,7 +167,7 @@ class Test:
             self.results['date'] = self.date
             self.results['test_result'] = self.h0_acceptance
             self.results['accept_Ratio'] = self.h0_accept_ratio
-            self.results = assign_groups_to_results(self.results, self.groups, self.comb, self.time_period)
+            self.results = assign_groups_to_results(self.results, self.groups, self.comb)
             self.final_results = self.results if self.final_results is None else concat([self.final_results, self.results])
         else:
             print(self.results.head())
