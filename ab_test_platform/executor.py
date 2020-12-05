@@ -25,10 +25,10 @@ class ABTest:
     groups:             column of the data which represents  individual groups for Testing.
                         AB Testing will be applied for each Groups which are unique value of groups column in data.
 
-    date:               This parameter represent calculating dates.
-                        If there is time schedule for AB Test, according to date column condition will be
-                        "< = date". All data before the given date (given date is included)
-                        must be collected for test results.
+    first_schedule_end_date:
+                        If it needs, it is able to be trigger related to a date that
+                        data is going to be filtered as before the given date.
+                        This parameter must be assigned when A/B Test is scheduling.
 
     feature:            Represents testing values of Test.
                         Test calculation will be applied according the feature column
@@ -42,22 +42,26 @@ class ABTest:
                         if there is ac- connection such as PostgreSQL / BigQuery
                             query must at the format "SELECT++++*+++FROM++ab_test_table_+++"
 
-    time_indicator      This can only be applied with date. It can be hour, day, week, week_part, quarter, year, month.
+    time_indicator:     This can only be applied with date. It can be hour, day, week, week_part, quarter, year, month.
                         Individually time indicator checks the date part is significantly
                         a individual group for data set or not.
                         If it is uses time_indicator as a  group
 
-    export_path        exporting the results data to. only path is enough for importing data with .csv format.
+    export_path:        Output results of export as csv format (optional).
+                        only path is enough for importing data with .csv format.
+                        Output will be '<date>_results.csv' with the test executed date. e.g. 20201205.results.csv
 
-    time_schedule       column of the data which represents  A - B Test of groups.
-                        It  is a column name from the data.
-                        AB test runs as control  - active group name related to columns of unique values.
-                        This column has to 2 unique values which shows us the test groups
+    time_schedule:      When AB Test need to be scheduled, only need to be assign here 'Hourly', 'Monthly',
+                        'Weekly', 'Mondays', ... , Sundays.
+
+    time_period:        The additional time period which (optional year, month, day, hour, week,
+                        week day, day part, quarter) (check details time periods).
+                        This parameter must be assigned when A/B Test is scheduling.
     """
     def __init__(self,
                  test_groups,
                  groups=None,
-                 date=None,
+                 first_schedule_end_date=None,
                  feature=None,
                  data_source=None,
                  data_query_path=None,
@@ -71,7 +75,7 @@ class ABTest:
                  boostrap_iteration=None):
         self.test_groups = test_groups
         self.groups = groups
-        self.date = date
+        self.date = first_schedule_end_date
         self.feature = feature
         self.data_source = data_source
         self.data_query_path = data_query_path
@@ -85,7 +89,7 @@ class ABTest:
         self.boostrap_iteration = boostrap_iteration
         self.arguments = {"test_groups": test_groups,
                           "groups": groups,
-                          "date": date,
+                          "date": first_schedule_end_date,
                           "feature": feature,
                           "data_source": data_source,
                           "data_query_path": data_query_path,
@@ -107,20 +111,6 @@ class ABTest:
         self.mandetory_arguments = ["data_source", "data_query_path", "test_groups", "groups", "feature", "export_path"]
         self.schedule_arg = "TS"
         self.params = None
-
-    def arguments_for_subprocess(self):
-        """
-        when scheduling the AB Test, it is running from shell format EX: "python .../../../scheduler_service.py
-        these arguments combined with string format to call with subprocess library.
-        """
-        for arg in self.arg_terminal:
-            if self.arguments[arg] is not None:
-                if arg == 'data_query_path':
-                    if self.data_source not in ["csv", "json"]:
-                        self.arguments[arg] = self.arguments[arg].replace(" ", "+")
-                self.args_str += " -" + self.arg_terminal[arg] + " " + self.arguments[arg]
-        if self.time_schedule is not None:
-            self.args_str += " -" + self.schedule_arg + " " + self.time_schedule
 
     def get_connector(self):
         """
@@ -217,10 +207,8 @@ class ABTest:
 
     def schedule_test(self):
         if self.get_connector():
-            self.arguments_for_subprocess()
             if self.check_for_time_schedule():
                 if self.check_for_mandetory_arguments():
-                    self.arguments['time_schedule'] = self.time_schedule
                     process = threading.Thread(target=create_job, kwargs={'ab_test_arguments': self.arguments,
                                                                                'time_period': self.time_schedule})
                     process.daemon = True
