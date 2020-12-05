@@ -86,7 +86,8 @@ class Test:
                  time_indicator=None,
                  export_path=None,
                  parameters=None):
-        self.date = convert_str_to_day(date)
+        self.date = convert_date(date)
+        self.start_date = None
         self.time_indicator = time_indicator
         self.data, self.groups = data_manipulation(date=date,
                                                    time_indicator=time_indicator,
@@ -94,7 +95,8 @@ class Test:
                                                    data_source=data_source,
                                                    groups=groups,
                                                    data_query_path=data_query_path,
-                                                   time_period=time_period)
+                                                   time_period=time_period,
+                                                   export_path=export_path)
         self.test_groups_field = test_groups
         self.test_groups_indicator = split_test_groups(self.test_groups_field, self.data)
         self.feature = feature
@@ -123,15 +125,12 @@ class Test:
                 query += self.groups[count] + " == '" + str(c) + "' and "
             count += 1
 
-        if not self.get_time_period_of_time_line():
-            if self.time_period == 'day':
-                print("yessssss")
-                query += self.time_indicator + " <= '" + str(self.tp) + "' and "
-            else:
-                if self.time_period in ["year", "month", "week", "week_day", "hour"]:
-                    query += self.time_period + " == " + str(self.tp) + " and "
-                if self.time_period in ["quarter", "week_part", "day_part"]:
-                    query += self.time + " == '" + str(self.tp) + "' and "
+        if self.date is not None:
+            query += self.time_indicator + " <= '" + str(self.date) + "' and "
+            if self.time_period is not None:
+                self.start_date = get_start_date_of_test(self.date, self.time_period)
+                query += self.time_indicator + " >= '" + str(self.start_date) + "' and "
+                print("query_date :", self.start_date, " - ", self.date)
         query = query[:-4]
         print(query)
         return query
@@ -169,7 +168,7 @@ class Test:
             self.results['date'] = self.date
             self.results['test_result'] = self.h0_acceptance
             self.results['accept_Ratio'] = self.h0_accept_ratio
-            self.results = assign_groups_to_results(self.results, self.groups, self.comb)
+            self.results = assign_groups_to_results(self.results, self.groups, self.comb, self.time_period)
             self.final_results = self.results if self.final_results is None else concat([self.final_results, self.results])
         else:
             print(self.results.head())
@@ -207,10 +206,6 @@ class Test:
     def check_for_time_period(self):
         return True if self.time_period is None else False
 
-    def get_time_period_of_time_line(self):
-        if not self.check_for_time_period():
-            self.time_indicator_values = sorted(self.data[self.time_period].unique())
-
     def run_test(self):
         try:
             self.f_w_data = self.data.query(self.get_query())
@@ -226,14 +221,10 @@ class Test:
     def execute(self):
         print("time period :", self.time_period)
         self.decide_distribution()
-        self.get_time_period_of_time_line()
         for self.comb in self.levels:
-            if self.check_for_time_period():
-                self.run_test()
-            else:
-                for self.tp in self.time_indicator_values:
-                    print(self.tp)
-                    self.run_test()
+            self.run_test()
+
+
 
 
 
