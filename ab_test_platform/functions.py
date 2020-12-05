@@ -1,6 +1,7 @@
 from itertools import product, combinations
 import numpy as np
 import pandas as pd
+from os.path import exists, join
 import random
 from math import sqrt
 from scipy import stats
@@ -447,3 +448,16 @@ def bayesian_approach(sample1, sample2, dist):
 def get_levels(data, groups):
     groups = [g for g in groups if g not in [None, '', 'none', 'null', 'None']]
     return list(product(*[list(data[data[g] == data[g]][g].unique()) for g in groups]))
+
+
+def get_start_date_of_test(date, time_period):
+    start_date = None
+    if time_period == 'day':
+        start_date = date - datetime.timedelta(days=time_period)
+    if time_period == 'hour':
+        start_date = date - datetime.timedelta(hours=time_period)
+    if time_period in 'week':
+        start_date = date - datetime.timedelta(days=7)
+    if time_period in 'month':
+        start_date = date - datetime.timedelta(days=30)
+    return start_date

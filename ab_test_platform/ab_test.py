@@ -95,8 +95,7 @@ class Test:
                                                    data_source=data_source,
                                                    groups=groups,
                                                    data_query_path=data_query_path,
-                                                   time_period=time_period,
-                                                   export_path=export_path)
+                                                   time_period=time_period)
         self.test_groups_field = test_groups
         self.test_groups_indicator = split_test_groups(self.test_groups_field, self.data)
         self.feature = feature

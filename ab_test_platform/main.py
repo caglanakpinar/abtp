@@ -13,8 +13,16 @@ except Exception as e:
     from .utils import kill_process_with_name, url_string, get_result_file_name
 
 
-def main(test_groups, groups=None, date=None, feature=None, data_source=None,
-         data_query_path=None, time_period=None, time_indicator=None, export_path=None, parameters=None):
+def main(test_groups,
+         groups=None,
+         date=None,
+         feature=None,
+         data_source=None,
+         data_query_path=None,
+         time_period=None,
+         time_indicator=None,
+         export_path=None,
+         parameters=None):
     print("received :", {'test_groups': test_groups, 'groups': groups, 'date': date,
                          'feature': feature, 'data_source': data_source,
                          'data_query_path': data_query_path, 'time_period': time_period,
@@ -22,8 +30,8 @@ def main(test_groups, groups=None, date=None, feature=None, data_source=None,
           )
     print(Test.__init__)
     ab_test = Test(test_groups=test_groups, groups=groups, date=date, feature=feature,
-                     data_source=data_source, data_query_path=url_string(data_query_path),
-                     time_period=time_period, time_indicator=time_indicator, export_path=export_path, parameters=parameters)
+                   data_source=data_source, data_query_path=url_string(data_query_path),
+                   time_period=time_period, time_indicator=time_indicator, export_path=export_path, parameters=parameters)
     ab_test.execute()
     print("Done!!")
     if export_path is None:
