@@ -56,13 +56,6 @@ def create_job(ab_test_arguments, time_period):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-TS", "--time_schedule", type=str,
-                        help="""
-                        column of the data which represents  A - B Test of groups. 
-                        It  is a column name from the data.
-                        AB test runs as control  - active group name related to columns of unique values.
-                        This column has to 2 unique values which shows us the test groups
-                        """)
     parser.add_argument("-TG", "--test_groups", type=str,
                         help="""
                         column of the data which represents  A - B Test of groups. 

@@ -25,11 +25,6 @@ class ABTest:
     groups:             column of the data which represents  individual groups for Testing.
                         AB Testing will be applied for each Groups which are unique value of groups column in data.
 
-    first_schedule_end_date:
-                        If it needs, it is able to be trigger related to a date that
-                        data is going to be filtered as before the given date.
-                        This parameter must be assigned when A/B Test is scheduling.
-
     feature:            Represents testing values of Test.
                         Test calculation will be applied according the feature column
 
@@ -61,7 +56,6 @@ class ABTest:
     def __init__(self,
                  test_groups,
                  groups=None,
-                 first_schedule_end_date=None,
                  feature=None,
                  data_source=None,
                  data_query_path=None,
@@ -75,7 +69,6 @@ class ABTest:
                  boostrap_iteration=None):
         self.test_groups = test_groups
         self.groups = groups
-        self.date = first_schedule_end_date
         self.feature = feature
         self.data_source = data_source
         self.data_query_path = data_query_path
@@ -89,7 +82,6 @@ class ABTest:
         self.boostrap_iteration = boostrap_iteration
         self.arguments = {"test_groups": test_groups,
                           "groups": groups,
-                          "date": first_schedule_end_date,
                           "feature": feature,
                           "data_source": data_source,
                           "data_query_path": data_query_path,
