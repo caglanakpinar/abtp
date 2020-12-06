@@ -338,7 +338,7 @@ def get_result_file_name(path, date, time_period=None):
         if date is not None:
             return join(path, date[0:19].replace("-", "").replace(" ", "") + "_results.csv")
         else:
-            return join(path,  datetime.datetime.now()[0:10].replace("-", "").replace(" ", "") + time_period + "_results.csv")
+            return join(path,  datetime.datetime.now()[0:19].replace("-", "").replace(" ", "") + time_period + "_results.csv")
 
 
 def get_folder_path():

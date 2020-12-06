@@ -157,10 +157,10 @@ class ABTest:
             else: return False
 
     def check_for_time_schedule(self):
-        if self.time_period is None:
+        if self.time_schedule is None:
             return True
         else:
-            if self.time_period in ["Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays",
+            if self.time_schedule in ["Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays",
                                     "Saturdays", "Sundays", "Daily", "hour", "week"]:
                 return True
             else: return False
@@ -210,7 +210,7 @@ class ABTest:
             if self.check_for_time_schedule():
                 if self.check_for_mandetory_arguments():
                     process = threading.Thread(target=create_job, kwargs={'ab_test_arguments': self.arguments,
-                                                                               'time_period': self.time_schedule})
+                                                                                'time_period': self.time_schedule})
                     process.daemon = True
                     process.start()
                 else:

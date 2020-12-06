@@ -28,8 +28,9 @@ def get_schedule(time_period):
     if time_period == 'week':
         return schedule.every().week
     if time_period == 'hour':
-        print("initial time :", str(datetime.datetime.now())[11:16])
-        return schedule.every(1).hours.at(str(datetime.datetime.now())[11:16])
+        initial_time = datetime.datetime.now() + datetime.timedelta(minutes=1)
+        print("initial time :", str(initial_time)[11:16])
+        return schedule.every(1).hours.at(str(initial_time)[11:16])
 
 
 def update_date():
