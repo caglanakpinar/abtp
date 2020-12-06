@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="abtest",
-    version="0.0.2",
+    version="0.0.3",
     author="Caglan Akpinar",
     author_email="cakpinar23@gmail.com",
     description="allows to run AB Test for any problem, automatically decides which test must be applied and represents the results",

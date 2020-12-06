@@ -1,16 +1,18 @@
 from os.path import join
-import subprocess
+import threading
 
 try:
     from main import main
     from data_access import GetData
     from utils import get_folder_path, write_yaml, read_yaml
     from configs import conf
+    from scheduler_service import create_job
 except Exception as e:
     from .main import main
     from .data_access import GetData
     from .utils import get_folder_path, write_yaml, read_yaml
     from .configs import conf
+    from .scheduler_service import create_job
 
 
 class ABTest:
@@ -22,11 +24,6 @@ class ABTest:
 
     groups:             column of the data which represents  individual groups for Testing.
                         AB Testing will be applied for each Groups which are unique value of groups column in data.
-
-    date:               This parameter represent calculating dates.
-                        If there is time schedule for AB Test, according to date column condition will be
-                        "< = date". All data before the given date (given date is included)
-                        must be collected for test results.
 
     feature:            Represents testing values of Test.
                         Test calculation will be applied according the feature column
@@ -40,17 +37,25 @@ class ABTest:
                         if there is ac- connection such as PostgreSQL / BigQuery
                             query must at the format "SELECT++++*+++FROM++ab_test_table_+++"
 
-    time_indicator      This can only be applied with date. It can be hour, day, week, week_part, quarter, year, month.
+    time_indicator:     This can only be applied with date. It can be hour, day, week, week_part, quarter, year, month.
                         Individually time indicator checks the date part is significantly
                         a individual group for data set or not.
                         If it is uses time_indicator as a  group
 
-    export_path        exporting the results data to. only path is enough for importing data with .csv format.
+    export_path:        Output results of export as csv format (optional).
+                        only path is enough for importing data with .csv format.
+                        Output will be '<date>_results.csv' with the test executed date. e.g. 20201205.results.csv
+
+    time_schedule:      When AB Test need to be scheduled, only need to be assign here 'Hourly', 'Monthly',
+                        'Weekly', 'Mondays', ... , Sundays.
+
+    time_period:        The additional time period which (optional year, month, day, hour, week,
+                        week day, day part, quarter) (check details time periods).
+                        This parameter must be assigned when A/B Test is scheduling.
     """
     def __init__(self,
                  test_groups,
                  groups=None,
-                 date=None,
                  feature=None,
                  data_source=None,
                  data_query_path=None,
@@ -64,7 +69,6 @@ class ABTest:
                  boostrap_iteration=None):
         self.test_groups = test_groups
         self.groups = groups
-        self.date = date
         self.feature = feature
         self.data_source = data_source
         self.data_query_path = data_query_path
@@ -78,7 +82,6 @@ class ABTest:
         self.boostrap_iteration = boostrap_iteration
         self.arguments = {"test_groups": test_groups,
                           "groups": groups,
-                          "date": date,
                           "feature": feature,
                           "data_source": data_source,
                           "data_query_path": data_query_path,
@@ -93,19 +96,13 @@ class ABTest:
                              "data_source":  "DS",
                              "data_query_path": "DQP",
                              "time_period": "TP",
-                             "time_indicator": "TI" ,"export_path": "EP", "parameters": "P"}
+                             "time_indicator": "TI", "export_path": "EP", "parameters": "P"}
         self.args_str = ""
         self.ab_test = None
         self.path = get_folder_path()
+        self.mandetory_arguments = ["data_source", "data_query_path", "test_groups", "groups", "feature", "export_path"]
+        self.schedule_arg = "TS"
         self.params = None
-
-    def arguments_for_subprocess(self):
-        """
-        when scheduling the AB Test, it is running from shell format EX: "python .../../../scheduler_service.py
-        these arguments combined with string format to call with subprocess library.
-        """
-        for arg in self.arg_terminal:
-            self.args_str += "-" + self.arg_terminal[arg] + " " + self.arguments[arg]
 
     def get_connector(self):
         """
@@ -115,7 +112,6 @@ class ABTest:
         try:
             if self.data_source not in ["csv", "json"]:
                 for i in config['db_connection']:
-                    print(i)
                     if i != 'data_source':
                         config['db_connection'][i] = self.connector[i]
                     else:
@@ -141,7 +137,7 @@ class ABTest:
 
     def query_string_change(self):
         if self.data_source in ['mysql', 'postgresql', 'awsredshift', 'googlebigquery']:
-            self.data_query_path = self.data_query_path.replace("\r", " ").replace("\n", " ").replace(" ", "+")
+            self.data_query_path = self.data_query_path.replace("\r", " ").replace("\n", " ").replace(" ", "+") + "+"
 
     def check_for_time_period(self):
         if self.time_period is None:
@@ -152,10 +148,17 @@ class ABTest:
                 return True
             else: return False
 
+    def check_for_time_schedule(self):
+        if self.time_schedule is None:
+            return True
+        else:
+            if self.time_schedule in ["Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays",
+                                    "Saturdays", "Sundays", "Daily", "hour", "week"]:
+                return True
+            else: return False
+
     def assign_test_parameters(self, param, param_name):
-        print(param, param_name)
         if param is not None:
-            print("yessss::::SA:DAS:DASD")
             for i in self.params:
                 if type(param) == list:
                     if len([i for i in param if 0 < i < 1]) != 0:
@@ -173,12 +176,21 @@ class ABTest:
                 self.assign_test_parameters(param=_p[0], param_name=_p[1])
             self.arguments["parameters"] = self.params
 
+    def check_for_mandetory_arguments(self):
+        for arg in self.arg_terminal:
+            if arg in self.mandetory_arguments:
+                return False if self.arguments[arg] is None else True
+
     def ab_test_init(self):
         self.check_for_test_parameters()
         self.query_string_change()
         if self.get_connector():
             if self.check_for_time_period():
-                self.ab_test = main(**self.arguments)
+                if self.check_for_mandetory_arguments():
+                    self.ab_test = main(**self.arguments)
+                else:
+                    print("check for the required paramters to initialize A/B Test:")
+                    print(" - ".join(self.mandetory_arguments))
             else:
                 print("optional time periods are :")
                 print("year", "month", "week", "week_day", "hour", "quarter", "week_part", "day_part")
@@ -187,8 +199,19 @@ class ABTest:
 
     def schedule_test(self):
         if self.get_connector():
-            cmd = "python " + self.path + " " + self.args_str
-            result = subprocess.Popen(cmd, shell=True)
+            if self.check_for_time_schedule():
+                if self.check_for_mandetory_arguments():
+                    process = threading.Thread(target=create_job, kwargs={'ab_test_arguments': self.arguments,
+                                                                                'time_period': self.time_schedule})
+                    process.daemon = True
+                    process.start()
+                else:
+                    print("check for the required parameters to initialize A/B Test:")
+                    print(" - ".join(self.mandetory_arguments))
+
+            else:
+                print("optional schedule time periods are :")
+                print("Mondays - .. - Sundays", "Daily", "week", "hour")
         else:
             print("pls check for data source connection / path / query.")
 

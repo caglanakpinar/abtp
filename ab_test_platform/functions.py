@@ -1,6 +1,7 @@
 from itertools import product, combinations
 import numpy as np
 import pandas as pd
+from os.path import exists, join
 import random
 from math import sqrt
 from scipy import stats
@@ -151,8 +152,12 @@ class TimePartFeatures:
                                                                       min(len(sample_1), len(sample_2)) * s_size_ratio),
                                                                   alpha=0.05, dist=self.data_distribution)
                 self.results = pd.DataFrame(self.results)
-
-                self.h0_accept_ratio = sum(self.results['h0_accept']) / len(self.results)
+                self.h0_accept_ratio = 0
+                if len(self.results['h0_accept']) != 0:
+                    try:
+                        self.h0_accept_ratio = sum(self.results['h0_accept']) / len(self.results)
+                    except Exception as e:
+                        print(e)
                 accept_count += 1 if self.h0_accept_ratio < self.threshold else 0
             accept_ratio = len(combs) * self.accept_ratio_value  # 50%
             print("Time Part :", part, "Accept Treshold :", accept_ratio, "Accepted Count :", accept_count)
@@ -208,7 +213,10 @@ class TimePartFeatures:
     def date_dimension_deciding(self):
         if self.time_indicator is not None:
             self.time_diff = get_time_difference(list(self.data[self.time_indicator]))
-            self.calculate_date_parts()
+            try:
+                self.calculate_date_parts()
+            except Exception as e:
+                print(e)
 
 
 def smallest_time_part(dates):
@@ -447,3 +455,16 @@ def bayesian_approach(sample1, sample2, dist):
 def get_levels(data, groups):
     groups = [g for g in groups if g not in [None, '', 'none', 'null', 'None']]
     return list(product(*[list(data[data[g] == data[g]][g].unique()) for g in groups]))
+
+
+def get_start_date_of_test(date, time_period):
+    start_date = None
+    if time_period == 'day':
+        start_date = date - datetime.timedelta(days=time_period)
+    if time_period == 'hour':
+        start_date = date - datetime.timedelta(hours=time_period)
+    if time_period in 'week':
+        start_date = date - datetime.timedelta(days=7)
+    if time_period in 'month':
+        start_date = date - datetime.timedelta(days=30)
+    return start_date

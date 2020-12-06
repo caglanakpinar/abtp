@@ -28,7 +28,9 @@ def get_schedule(time_period):
     if time_period == 'week':
         return schedule.every().week
     if time_period == 'hour':
-        return schedule.every(1).hours.at()
+        initial_time = datetime.datetime.now() + datetime.timedelta(minutes=1)
+        print("initial time :", str(initial_time)[11:16])
+        return schedule.every(1).hours.at(str(initial_time)[11:16])
 
 
 def update_date():
@@ -45,20 +47,15 @@ def create_job(ab_test_arguments, time_period):
     args = ab_test_arguments
     _sch = get_schedule(time_period)
     _sch.do(run_ab_test)
+    print(_sch)
     while True:
-        _sch.run_pending()
+        print("waiting...")
+        schedule.run_pending()
         time.sleep(1000)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-TS", "--time_schedule", type=str,
-                        help="""
-                        column of the data which represents  A - B Test of groups. 
-                        It  is a column name from the data.
-                        AB test runs as control  - active group name related to columns of unique values.
-                        This column has to 2 unique values which shows us the test groups
-                        """)
     parser.add_argument("-TG", "--test_groups", type=str,
                         help="""
                         column of the data which represents  A - B Test of groups. 
@@ -110,11 +107,12 @@ if __name__ == '__main__':
     parser.add_argument("-EP", "--export_path", type=str,
                         help="""
                         """,
+                        required=True
                         )
     arguments = parser.parse_args()
     ab_test_arguments = {'test_groups': arguments.test_groups, 'groups': arguments.groups, 'date': arguments.date,
                          'feature': arguments.feature, 'data_source': arguments.data_source,
-                         'data_query_path': arguments.data_query_path, 'time_period': arguments.time_period,
+                         'data_query_path': arguments.data_query_path,
                          "export_path": arguments.export_path}
-
+    print(ab_test_arguments)
     create_job(ab_test_arguments, arguments.time_schedule)
