@@ -64,7 +64,7 @@ Here is the data source that you can connect with your SQL queries:
     
         data_source = "postgresql"
         connector = {"user": ***, "password": ***, "server": "127.0.0.1", 
-                     "port": "5440", "db": ***}
+                     "port": ****, "db": ***}
         data_main_path ="""
                            SELECT                             
                             groups,
