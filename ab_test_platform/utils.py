@@ -179,23 +179,22 @@ def model_path(comb, group, model):
     return "_".join(["_".join([str(i[0]) + "*" + str(i[1]) for i in zip(group, comb)]), model]) + ".json"
 
 
-def convert_date(date=None, time=None, str=False):
+def convert_date(date):
     if date not in ['', None]:
-        date_merged = date + ' ' + time if time != '' else date
-        if len(date_merged) == 0:
+        if len(date) == 0:
             format_str = '%Y-%m-%d'
-        if len(date_merged) == 16:
+        if len(date) == 16:
             format_str = '%Y-%m-%d %H:%M'
-        if len(date_merged) > 16:
+        if len(date) > 16:
             format_str = '%Y-%m-%d %H:%M:%S.%f'
         if not str:
-            date_merged = datetime.datetime.strptime(date_merged, format_str)
+            date = datetime.datetime.strptime(date, format_str)
     else:
-        date_merged = datetime.datetime.now() + datetime.timedelta(minutes=2)
-    return date_merged
+        date = datetime.datetime.now() + datetime.timedelta(minutes=2)
+    return date
 
 
-def convert_date(x):
+def convert_date_v2(x):
     return datetime.datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S")
 
 
@@ -206,39 +205,9 @@ def convert_str_to_day(x):
         return None
 
 
-def get_split_date(period=None, dates=None, params=None):
-    model_infos = read_yaml(conf('model_main_path'), 'model_configuration.yaml')['infos']
-    if period is not None:
-        today = max(dates) if dates is not None else convert_date(model_infos['max_date'])
-        isoweekday = {weekdays[i]: i for i in range(7)}
-        day_diffs = {"Daily": 1, 'Weekly': 7, 'Every 2 Weeks': 14, 'Monthly': 30}
-        hour_diffs = {"hourly": datetime.timedelta(hours=1), 'Every Min': datetime.timedelta(minutes=1), 'Every Second': datetime.timedelta(seconds=1)}
-        if period in weekdays:
-            last_isoweekday = lambda x: today + datetime.timedelta(days=-today.weekday()) + datetime.timedelta(days=x)
-            split_date = last_isoweekday(isoweekday[period])
-        if period in list(day_diffs.keys()):
-            split_date = today - datetime.timedelta(days=day_diffs[period])
-        if period in list(hour_diffs.keys()):
-            split_date = today - hour_diffs[period]
-    else:
-        if dates is not None:
-            split_date = get_ratio_of_date(max(dates), min(dates), params['split_ratio'])
-        else:
-            max_date, min_date = convert_date(model_infos['max_date']), convert_date(model_infos['min_date'])
-            split_date = get_ratio_of_date(max_date, min_date, params['split_ratio'])
-    return split_date
-
-
 def get_ratio_of_date(max_date, min_date, ratio):
     range_dates = (max_date - min_date).total_seconds()
     return min_date + datetime.timedelta(seconds=int(range_dates * ratio))
-
-
-def get_query_date(job, period=None, dates=None, params=None):
-    date = None
-    if job == 'prediction':
-        date = get_split_date(period=period, dates=dates, params=params)
-    return date
 
 
 def url_string(value, res=False):
@@ -369,7 +338,7 @@ def get_result_file_name(path, date, time_period=None):
         if date is not None:
             return join(path, date[0:19].replace("-", "").replace(" ", "") + "_results.csv")
         else:
-            return join(path,  time_period + "_results.csv")
+            return join(path,  datetime.datetime.now()[0:10].replace("-", "").replace(" ", "") + time_period + "_results.csv")
 
 
 def get_folder_path():
