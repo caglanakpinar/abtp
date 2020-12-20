@@ -22,7 +22,7 @@
     
     ***test_groups :*** if there are any sub-groups of the active and control group, the framework can run Test results for each subgroup. This parameter must be the column name that exists on the given data set for both Active and Control groups.
     
-    **groups :*** The column name represents the active and controls group flag.
+    ***groups :*** The column name represents the active and controls group flag.
     
     ***feature :*** The column name that represents actual values that are tested according to two main groups.
     
