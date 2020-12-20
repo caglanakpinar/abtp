@@ -14,7 +14,7 @@
 -   Time period detection (year, quarter, month, week, week-part, day, hour) adding as subgroups.
 -   subgroups of testing are available
 -   schedule your test daily, monthly, weekly, hourly.
--   The confidence level can automatically assign and tests for each Confidence levels (e.g. 0.01, 0.05 applying for testes individually)i
+-   The confidence level can automatically assign and tests for each Confidence levels (e.g. 0.01, 0.05 applying for testes individually)
 
 ##### Running Platform
 
