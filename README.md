@@ -24,23 +24,23 @@
     
     **groups :*** The column name represents the active and controls group flag.
     
-    **feature :*** The column name that represents actual values that are tested according to two main groups.
+    ***feature :*** The column name that represents actual values that are tested according to two main groups.
     
-    **data_source :*** The location where the data is stored or the query (check data source for details).
+    ***data_source :*** The location where the data is stored or the query (check data source for details).
     
-    **data_query_path :*** Type of data source to import data to the platform (optional Ms SQL, PostgreSQL, AWS RedShift, Google BigQuery, csv, json, pickle).
+    ***data_query_path :*** Type of data source to import data to the platform (optional Ms SQL, PostgreSQL, AWS RedShift, Google BigQuery, csv, json, pickle).
     
-    **time_period :*** The additional time period which (optional year, month, day, hour, week, week day, day part quarter) (check details time periods). **This parameter must be assigned when A/B Test is scheduling**.
+    ***time_period :*** The additional time period which (optional year, month, day, hour, week, week day, day part quarter) (check details time periods). **This parameter must be assigned when A/B Test is scheduling**.
     
-    **time_indicator :*** If test is running periodically, the column name that related to time must be assigned. **This parameter must be assigned when A/B Test is scheduling**.
+    ***time_indicator :*** If test is running periodically, the column name that related to time must be assigned. **This parameter must be assigned when A/B Test is scheduling**.
     
-    **export_path :*** Output results of export as csv format (optional). only path is enough for importing data with .csv format. Output will be '<date>_results.csv' with the test executed date. e.g. 20201205.results.csv
+    ***export_path :*** Output results of export as csv format (optional). only path is enough for importing data with .csv format. Output will be '<date>_results.csv' with the test executed date. e.g. 20201205.results.csv
     
-    **connector :*** if there is a connection paramters as user, pasword, host port, this allows us to assign it as dictionary format (e.g {"user": ***, "pw": ****}).
+    ***connector :*** if there is a connection paramters as user, pasword, host port, this allows us to assign it as dictionary format (e.g {"user": ***, "pw": ****}).
     
-    **confidence_level :*** The Confidence level of test results (list or float).
+    ***confidence_level :*** The Confidence level of test results (list or float).
     
-    **boostrap_sample_ratio :*** Bootstrapping randomly selected sample data rate (between 0 and 1).
+    ***boostrap_sample_ratio :*** Bootstrapping randomly selected sample data rate (between 0 and 1).
     
     *boostrap_iteration :*** Number of iteration for bootstrapping.
     
