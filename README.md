@@ -34,7 +34,7 @@
     
     ***time_indicator :*** If test is running periodically, the column name that related to time must be assigned. **This parameter must be assigned when A/B Test is scheduling**.
     
-    ***export_path :*** Output results of export as csv format (optional). only path is enough for importing data with .csv format. Output will be '<date>_results.csv' with the test executed date. e.g. 20201205.results.csv
+    ***export_path :*** Output results of export as csv format (optional). only path is enough for importing data with .csv format. Output will be '<date>_results.csv' with the test executed date. e.g. 20201205_results.csv
     
     ***connector :*** if there is a connection paramters as user, pasword, host port, this allows us to assign it as dictionary format (e.g {"user": ***, "pw": ****}).
     
