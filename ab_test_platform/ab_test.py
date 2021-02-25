@@ -124,7 +124,7 @@ class Test:
                 query += self.groups[count] + " == '" + str(c) + "' and "
             count += 1
 
-        if self.date is not None:
+        if self.date is not None and self.time_indicator is not None:
             query += self.time_indicator + " <= '" + str(self.date) + "' and "
             if self.time_period is not None:
                 self.start_date = get_start_date_of_test(self.date, self.time_period)
