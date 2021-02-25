@@ -106,33 +106,35 @@ class ABTest:
 
     def get_connector(self):
         """
-       query_string_change İf data
+       query_string_change connection checks.
+       tries for db connections (postgresql, RedShift, googlebigquery).
+       If fials checks for
         """
         config = conf('config')
         try:
-            if self.data_source not in ["csv", "json"]:
-                for i in config['db_connection']:
-                    if i != 'data_source':
+            data_access_args = {"data_source": self.data_source,
+                                "data_query_path": self.data_query_path,
+                                "time_indicator": self.time_indicator,
+                                "feature": self.feature}
+
+            for i in config['db_connection']:
+                print(i)
+                if i != 'data_source':
+                    config['db_connection'][i] = None
+                    if self.data_source not in ["csv", "json"]:
                         config['db_connection'][i] = self.connector[i]
-                    else:
-                        config['db_connection']['data_source'] = self.data_source
+                else:
+                    config['db_connection']['data_source'] = self.data_source
+            if self.data_source in ["csv", "json"]:
+                data_access_args['test'] = 10
             write_yaml(join(self.path, "docs"), "configs.yaml", config, ignoring_aliases=False)
-            source = GetData(data_source=self.data_source,
-                             date=self.date,
-                             data_query_path=self.data_query_path,
-                             time_indicator=self.time_indicator,
-                             feature=self.feature)
+            source = GetData(**data_access_args)
             source.get_connection()
-            return True
+            if self.data_source in ["csv", "json"]:
+                source.data_execute()
+                return True if len(source.data) != 0 else False
+            else: return True
         except Exception as e:
-            print(e)
-            if self.data_source not in ["csv", "json"]:
-                for i in config['db_connection']:
-                    if i is not 'data_source':
-                        config['db_connection'][i] = None
-                    else:
-                        config['db_connection']['data_source'] = self.data_source
-            write_yaml(join(self.path, "docs"), "configs.yaml", config, ignoring_aliases=False)
             return False
 
     def query_string_change(self):
