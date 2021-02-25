@@ -22,11 +22,9 @@ def get_comb_params(distributions):
     comb_arrays = {}
     for d in distributions:
         _params = distributions[d]
-        print(_params)
         _keys = list(distributions[d].keys())
         arrays = []
         for p in _params:
-            print(p)
             if "*" in list(_params[p]):
                 arrays.append(
                               arange(float(_params[p].split("*")[0]),
@@ -131,7 +129,6 @@ class Test:
                 query += self.time_indicator + " >= '" + str(self.start_date) + "' and "
                 print("query_date :", self.start_date, " - ", self.date)
         query = query[:-4]
-        print(query)
         return query
 
     def get_control_and_active_data(self):

@@ -118,7 +118,6 @@ class ABTest:
                                 "feature": self.feature}
 
             for i in config['db_connection']:
-                print(i)
                 if i != 'data_source':
                     config['db_connection'][i] = None
                     if self.data_source not in ["csv", "json"]:
