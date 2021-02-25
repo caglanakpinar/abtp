@@ -91,6 +91,9 @@ Here is the data source that you can connect with your SQL queries:
 
 -   **Connection csv - .json - .pickle** 
         
+      It is crucial that when data source is assigned as 'csv' - 'json' - 'pickle', file path must be assigned directly to file with the format. 
+      For instance data_source is 'csv' and 'data_main_path must be '/data_where_you_store/data_where_you_store_2/../data_that_you_want_to_import.csv'
+        
         data_source = "csv"
         data_main_path = "./data_where_you_store/***.csv"
         

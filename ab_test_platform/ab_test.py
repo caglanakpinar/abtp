@@ -22,11 +22,9 @@ def get_comb_params(distributions):
     comb_arrays = {}
     for d in distributions:
         _params = distributions[d]
-        print(_params)
         _keys = list(distributions[d].keys())
         arrays = []
         for p in _params:
-            print(p)
             if "*" in list(_params[p]):
                 arrays.append(
                               arange(float(_params[p].split("*")[0]),
@@ -124,14 +122,13 @@ class Test:
                 query += self.groups[count] + " == '" + str(c) + "' and "
             count += 1
 
-        if self.date is not None:
+        if self.date is not None and self.time_indicator is not None:
             query += self.time_indicator + " <= '" + str(self.date) + "' and "
             if self.time_period is not None:
                 self.start_date = get_start_date_of_test(self.date, self.time_period)
                 query += self.time_indicator + " >= '" + str(self.start_date) + "' and "
                 print("query_date :", self.start_date, " - ", self.date)
         query = query[:-4]
-        print(query)
         return query
 
     def get_control_and_active_data(self):
@@ -174,7 +171,7 @@ class Test:
             self.final_results = self.results
 
     def is_boostraping_calculation(self):
-        if self.date is None:
+        if self.date is None or self.time_indicator is None:
             return True
         else:
             if self.export_path is None:
