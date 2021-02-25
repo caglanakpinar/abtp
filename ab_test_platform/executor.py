@@ -156,9 +156,10 @@ class ABTest:
             return True
         else:
             if self.time_schedule in ["Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays",
-                                    "Saturdays", "Sundays", "Daily", "hour", "week"]:
+                                      "Saturdays", "Sundays", "Daily", "hour", "week"]:
                 return True
-            else: return False
+            else:
+                return False
 
     def assign_test_parameters(self, param, param_name):
         if param is not None:
@@ -171,6 +172,14 @@ class ABTest:
                         self.params[i][param_name] = str(param)
 
     def check_for_test_parameters(self):
+        """
+        checking and updating test parameters; confidence_level and boostrap_ratio
+        Boostrap Ratio: decision of the ratio of boostraping.
+                        sample_size = data_size * boostrap_Ratio
+        Confidence Level: The decision of Hypothesis Test of Confidences Level.
+                          This allows us to run or A/B Test with more than one Confidence Level to see
+                          how the Hypothesis of Acceptance is changing.
+        """
         if self.confidence_level is not None or self.boostrap_sample_ratio is not None:
             self.params = read_yaml(join(self.path, "docs"), "test_parameters.yaml")['test_parameters']
             for _p in [(self.confidence_level, "confidence_level"),
@@ -185,9 +194,45 @@ class ABTest:
                 return False if self.arguments[arg] is None else True
 
     def ab_test_init(self):
-        self.check_for_test_parameters()
+        """
+        Initialize A/B Test. After assgn parameters don`t forget to run ab_test_init.
+        Example;
+
+        groups = "groups"
+        test_groups = "test_groups"
+        feature = "feature"
+        data_source = "postgresql"
+        connector = {"user": ***, "password": ***, "server": "127.0.0.1",
+        "port": ****, "db": ***}
+        data_main_path = '
+                        SELECT
+                        groups,
+                        test_groups
+                        feature,
+                        time_indicator
+                        FROM table
+        '
+        confidence_level = [0.01, 0.05]
+        boostrap_ratio = [0.1, 0.2]
+        export_path =  abspath("") + '/data'
+
+        ab = ABTest(test_groups=test_groups,
+                groups=groups,
+                feature=feature,
+                data_source=data_source,
+                data_query_path=query,
+                time_period=time_period,
+                time_indicator=time_indicator,
+                time_schedule=time_schedule,
+                export_path=export_path,
+                connector=connector,
+                confidence_level=confidence_level,
+                boostrap_sample_ratio=boostrap_ratio)
+        ab.ab_test_init()
+        """
+        self.check_for_test_parameters()  # checking and updating test parameters; confidence_level and boostrap_ratio
         self.query_string_change()
-        if self.get_connector():
+        if self.get_connector():  # connection to data source check
             if self.check_for_time_period():
                 if self.check_for_mandetory_arguments():
                     self.ab_test = main(**self.arguments)
@@ -201,11 +246,14 @@ class ABTest:
             print("pls check for data source connection / path / query.")
 
     def schedule_test(self):
+        """
+        schedule A/B Test with given time periods.
+        """
         if self.get_connector():
             if self.check_for_time_schedule():
                 if self.check_for_mandetory_arguments():
                     process = threading.Thread(target=create_job, kwargs={'ab_test_arguments': self.arguments,
-                                                                                'time_period': self.time_schedule})
+                                                                          'time_period': self.time_schedule})
                     process.daemon = True
                     process.start()
                 else:
