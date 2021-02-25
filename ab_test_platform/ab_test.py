@@ -174,7 +174,7 @@ class Test:
             self.final_results = self.results
 
     def is_boostraping_calculation(self):
-        if self.date is None:
+        if self.date is None or self.time_indicator is None:
             return True
         else:
             if self.export_path is None:
