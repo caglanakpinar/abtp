@@ -148,7 +148,8 @@ class ABTest:
             if self.time_period in ["day", "year", "month", "week", "week_day",
                                     "hour", "quarter", "week_part", "day_part"]:
                 return True
-            else: return False
+            else:
+                return False
 
     def check_for_time_schedule(self):
         if self.time_schedule is None:
