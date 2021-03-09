@@ -23,10 +23,12 @@ def main(test_groups,
          time_indicator=None,
          export_path=None,
          parameters=None):
+         parameters=None,
+         data=None,
     print("received :", {'test_groups': test_groups, 'groups': groups, 'date': date,
                          'feature': feature, 'data_source': data_source,
                          'data_query_path': data_query_path, 'time_period': time_period,
-                         "time_indicator": time_indicator, "export_path": export_path, "parameters": parameters}
+                         "time_indicator": time_indicator, "export_path": export_path, "parameters": parameters,
           )
     print(Test.__init__)
     ab_test = Test(test_groups=test_groups, groups=groups, date=date, feature=feature,

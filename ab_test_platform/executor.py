@@ -42,6 +42,8 @@ class ABTest:
                         a individual group for data set or not.
                         If it is uses time_indicator as a  group
 
+    exporting_data:     If you dont need to export data assign False. By default it is True
+
     export_path:        Output results of export as csv format (optional).
                         only path is enough for importing data with .csv format.
                         Output will be '<date>_results.csv' with the test executed date. e.g. 20201205.results.csv
@@ -62,6 +64,7 @@ class ABTest:
                  time_period=None,
                  time_indicator=None,
                  time_schedule=None,
+                 exporting_data=True,
                  export_path=None,
                  connector=None,
                  confidence_level=None,
@@ -75,6 +78,7 @@ class ABTest:
         self.time_period = time_period
         self.time_indicator = time_indicator
         self.time_schedule = time_schedule
+        self.exporting_data = False if export_path is None else exporting_data
         self.export_path = export_path
         self.connector = connector
         self.confidence_level = confidence_level
@@ -88,6 +92,7 @@ class ABTest:
                           "time_period": time_period,
                           "time_indicator": time_indicator,
                           "export_path": export_path,
+                          "exporting_data": exporting_data,
                           "parameters": None}
         self.arg_terminal = {"test_groups": "TG",
                              "groups": "G",
