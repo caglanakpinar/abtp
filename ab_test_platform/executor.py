@@ -1,5 +1,6 @@
 from os.path import join
 import threading
+from pandas import DataFrame
 
 try:
     from main import main
@@ -17,6 +18,8 @@ except Exception as e:
 
 class ABTest:
     """
+    data:               You may directly assign data to testing process. I that case you don`t need to assign
+                        data_source / data_query_path. But you may only assign pandas data-frame
     test_groups:        column of the data which represents  A - B Test of groups.
                         It  is a column name from the data.
                         AB test runs as control  - active group name related to columns of unique values.
@@ -42,6 +45,8 @@ class ABTest:
                         a individual group for data set or not.
                         If it is uses time_indicator as a  group
 
+    exporting_data:     If you dont need to export data assign False. By default it is True
+
     export_path:        Output results of export as csv format (optional).
                         only path is enough for importing data with .csv format.
                         Output will be '<date>_results.csv' with the test executed date. e.g. 20201205.results.csv
@@ -55,6 +60,7 @@ class ABTest:
     """
     def __init__(self,
                  test_groups,
+                 data=None,
                  groups=None,
                  feature=None,
                  data_source=None,
@@ -62,12 +68,14 @@ class ABTest:
                  time_period=None,
                  time_indicator=None,
                  time_schedule=None,
+                 exporting_data=True,
                  export_path=None,
                  connector=None,
                  confidence_level=None,
                  boostrap_sample_ratio=None,
                  boostrap_iteration=None):
         self.test_groups = test_groups
+        self.data = data
         self.groups = groups
         self.feature = feature
         self.data_source = data_source
@@ -75,12 +83,14 @@ class ABTest:
         self.time_period = time_period
         self.time_indicator = time_indicator
         self.time_schedule = time_schedule
+        self.exporting_data = False if export_path is None else exporting_data
         self.export_path = export_path
         self.connector = connector
         self.confidence_level = confidence_level
         self.boostrap_sample_ratio = boostrap_sample_ratio
         self.boostrap_iteration = boostrap_iteration
-        self.arguments = {"test_groups": test_groups,
+        self.arguments = {"data": data,
+                          "test_groups": test_groups,
                           "groups": groups,
                           "feature": feature,
                           "data_source": data_source,
@@ -88,6 +98,7 @@ class ABTest:
                           "time_period": time_period,
                           "time_indicator": time_indicator,
                           "export_path": export_path,
+                          "exporting_data": exporting_data,
                           "parameters": None}
         self.arg_terminal = {"test_groups": "TG",
                              "groups": "G",
@@ -110,31 +121,34 @@ class ABTest:
        tries for db connections (postgresql, RedShift, googlebigquery).
        If fials checks for
         """
-        config = conf('config')
-        try:
-            data_access_args = {"data_source": self.data_source,
-                                "data_query_path": self.data_query_path,
-                                "time_indicator": self.time_indicator,
-                                "feature": self.feature}
+        if self.data is None:
+            config = conf('config')
+            try:
+                data_access_args = {"data_source": self.data_source,
+                                    "data_query_path": self.data_query_path,
+                                    "time_indicator": self.time_indicator,
+                                    "feature": self.feature}
 
-            for i in config['db_connection']:
-                if i != 'data_source':
-                    config['db_connection'][i] = None
-                    if self.data_source not in ["csv", "json"]:
-                        config['db_connection'][i] = self.connector[i]
-                else:
-                    config['db_connection']['data_source'] = self.data_source
-            if self.data_source in ["csv", "json"]:
-                data_access_args['test'] = 10
-            write_yaml(join(self.path, "docs"), "configs.yaml", config, ignoring_aliases=False)
-            source = GetData(**data_access_args)
-            source.get_connection()
-            if self.data_source in ["csv", "json"]:
-                source.data_execute()
-                return True if len(source.data) != 0 else False
-            else: return True
-        except Exception as e:
-            return False
+                for i in config['db_connection']:
+                    if i != 'data_source':
+                        config['db_connection'][i] = None
+                        if self.data_source not in ["csv", "json"]:
+                            config['db_connection'][i] = self.connector[i]
+                    else:
+                        config['db_connection']['data_source'] = self.data_source
+                if self.data_source in ["csv", "json"]:
+                    data_access_args['test'] = 10
+                write_yaml(join(self.path, "docs"), "configs.yaml", config, ignoring_aliases=False)
+                source = GetData(**data_access_args)
+                source.get_connection()
+                if self.data_source in ["csv", "json"]:
+                    source.data_execute()
+                    return True if len(source.data) != 0 else False
+                else: return True
+            except Exception as e:
+                return False
+        else:
+            return True if type(self.data) == DataFrame else False
 
     def query_string_change(self):
         if self.data_source in ['mysql', 'postgresql', 'awsredshift', 'googlebigquery']:
@@ -188,9 +202,13 @@ class ABTest:
             self.arguments["parameters"] = self.params
 
     def check_for_mandetory_arguments(self):
-        for arg in self.arg_terminal:
-            if arg in self.mandetory_arguments:
-                return False if self.arguments[arg] is None else True
+        accept = True
+        if self.data is None:
+            for arg in self.arg_terminal:
+                if arg in self.mandetory_arguments:
+                    if self.arguments[arg] is None:
+                        accept = False
+        return accept
 
     def ab_test_init(self):
         """
@@ -243,6 +261,12 @@ class ABTest:
                 print("year", "month", "week", "week_day", "hour", "quarter", "week_part", "day_part")
         else:
             print("pls check for data source connection / path / query.")
+
+    def get_results(self):
+        if self.ab_test is not None:
+            return self.ab_test.final_results
+        else:
+            return DataFrame()
 
     def schedule_test(self):
         """

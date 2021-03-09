@@ -34,15 +34,20 @@
     
     ***time_indicator :*** If test is running periodically, the column name that related to time must be assigned. **This parameter must be assigned when A/B Test is scheduling**.
     
-    ***export_path :*** Output results of export as csv format (optional). only path is enough for importing data with .csv format. Output will be '<date>_results.csv' with the test executed date. e.g. 20201205_results.csv
+     ***exporting_data :*** Output results of export as CSV format (optional). The only path is enough for importing data with .csv format. The output will be '<date>_results.csv' with the test executed date. e.g. 20201205.results.csv 
+    This parameter is by default True. When you don't want to create a result file, assign False and collect data via **get_results**.
+    
+    ***export_path :*** Output results of export as csv format. Only path is enough for importing data with .csv format. Output will be '<date>_results.csv' with the test executed date. e.g. 20201205.results.csv 
+    This parameter is crucial, otherwise **docs** folder can not be copied given path.
     
     ***connector :*** if there is a connection paramters as user, pasword, host port, this allows us to assign it as dictionary format (e.g {"user": ***, "pw": ****}).
     
     ***confidence_level :*** The Confidence level of test results (list or float).
+
     
     ***boostrap_sample_ratio :*** Bootstrapping randomly selected sample data rate (between 0 and 1).
     
-    *boostrap_iteration :*** Number of iteration for bootstrapping.
+    ***boostrap_iteration :*** Number of iteration for bootstrapping.
     
     ***time_schedule :*** When AB Test need to be scheduled, the only period of time is required.  Available time periods are 'Hourly', 'Monthly', 'Weekly', 'Mondays', ... , Sundays..
     **This parameter must be assigned when A/B Test is scheduling**.
@@ -131,6 +136,25 @@ Here is the data source that you can connect with your SQL queries:
             confidence_level=confidence_level, 
             boostrap_sample_ratio=boostrap_ratio)
     ab.ab_test_init()
+    
+
+#### Get Results
+
+    ab = ABTest(test_groups=test_groups, 
+            groups=groups, 
+            feature=feature, 
+            data_source=data_source,
+            data_query_path=query, 
+            time_period=time_period, 
+            time_indicator=time_indicator,
+            time_schedule=time_schedule,
+            export_path=None, 
+            connector=connector, 
+            confidence_level=confidence_level, 
+            boostrap_sample_ratio=boostrap_ratio)
+    ab.ab_test_init()
+    
+    results = ab.get_results()
     
     
 #### Schedule
