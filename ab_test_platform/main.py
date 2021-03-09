@@ -35,11 +35,10 @@ def main(test_groups,
     ab_test.execute()
     print("Done!!")
     if export_path is None:
-        return ab_test
-    else:
         print("exporting path :", export_path)
         print(ab_test.final_results.head())
         ab_test.final_results.to_csv(get_result_file_name(export_path, date, time_period), index=False)
+    return ab_test
 
 
 if __name__ == '__main__':

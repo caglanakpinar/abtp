@@ -244,6 +244,12 @@ class ABTest:
         else:
             print("pls check for data source connection / path / query.")
 
+    def get_results(self):
+        if self.ab_test is not None:
+            return self.ab_test.final_results
+        else:
+            return DataFrame()
+
     def schedule_test(self):
         """
         schedule A/B Test with given time periods.
