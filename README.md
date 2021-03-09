@@ -43,6 +43,7 @@
     ***connector :*** if there is a connection paramters as user, pasword, host port, this allows us to assign it as dictionary format (e.g {"user": ***, "pw": ****}).
     
     ***confidence_level :*** The Confidence level of test results (list or float).
+
     
     ***boostrap_sample_ratio :*** Bootstrapping randomly selected sample data rate (between 0 and 1).
     
@@ -68,7 +69,7 @@ Here is the data source that you can connect with your SQL queries:
     
         data_source = "postgresql"
         connector = {"user": ***, "password": ***, "server": "127.0.0.1", 
-                     "port": "5440", "db": ***}
+                     "port": ****, "db": ***}
         data_main_path ="""
                            SELECT                             
                             groups,
