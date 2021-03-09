@@ -1,5 +1,6 @@
 from os.path import join
 import threading
+from pandas import DataFrame
 
 try:
     from main import main
@@ -17,6 +18,8 @@ except Exception as e:
 
 class ABTest:
     """
+    data:               You may directly assign data to testing process. I that case you don`t need to assign
+                        data_source / data_query_path. But you may only assign pandas data-frame
     test_groups:        column of the data which represents  A - B Test of groups.
                         It  is a column name from the data.
                         AB test runs as control  - active group name related to columns of unique values.
@@ -57,6 +60,7 @@ class ABTest:
     """
     def __init__(self,
                  test_groups,
+                 data=None,
                  groups=None,
                  feature=None,
                  data_source=None,
@@ -71,6 +75,7 @@ class ABTest:
                  boostrap_sample_ratio=None,
                  boostrap_iteration=None):
         self.test_groups = test_groups
+        self.data = data
         self.groups = groups
         self.feature = feature
         self.data_source = data_source
@@ -84,7 +89,8 @@ class ABTest:
         self.confidence_level = confidence_level
         self.boostrap_sample_ratio = boostrap_sample_ratio
         self.boostrap_iteration = boostrap_iteration
-        self.arguments = {"test_groups": test_groups,
+        self.arguments = {"data": data,
+                          "test_groups": test_groups,
                           "groups": groups,
                           "feature": feature,
                           "data_source": data_source,
@@ -115,31 +121,34 @@ class ABTest:
        tries for db connections (postgresql, RedShift, googlebigquery).
        If fials checks for
         """
-        config = conf('config')
-        try:
-            data_access_args = {"data_source": self.data_source,
-                                "data_query_path": self.data_query_path,
-                                "time_indicator": self.time_indicator,
-                                "feature": self.feature}
+        if self.data is None:
+            config = conf('config')
+            try:
+                data_access_args = {"data_source": self.data_source,
+                                    "data_query_path": self.data_query_path,
+                                    "time_indicator": self.time_indicator,
+                                    "feature": self.feature}
 
-            for i in config['db_connection']:
-                if i != 'data_source':
-                    config['db_connection'][i] = None
-                    if self.data_source not in ["csv", "json"]:
-                        config['db_connection'][i] = self.connector[i]
-                else:
-                    config['db_connection']['data_source'] = self.data_source
-            if self.data_source in ["csv", "json"]:
-                data_access_args['test'] = 10
-            write_yaml(join(self.path, "docs"), "configs.yaml", config, ignoring_aliases=False)
-            source = GetData(**data_access_args)
-            source.get_connection()
-            if self.data_source in ["csv", "json"]:
-                source.data_execute()
-                return True if len(source.data) != 0 else False
-            else: return True
-        except Exception as e:
-            return False
+                for i in config['db_connection']:
+                    if i != 'data_source':
+                        config['db_connection'][i] = None
+                        if self.data_source not in ["csv", "json"]:
+                            config['db_connection'][i] = self.connector[i]
+                    else:
+                        config['db_connection']['data_source'] = self.data_source
+                if self.data_source in ["csv", "json"]:
+                    data_access_args['test'] = 10
+                write_yaml(join(self.path, "docs"), "configs.yaml", config, ignoring_aliases=False)
+                source = GetData(**data_access_args)
+                source.get_connection()
+                if self.data_source in ["csv", "json"]:
+                    source.data_execute()
+                    return True if len(source.data) != 0 else False
+                else: return True
+            except Exception as e:
+                return False
+        else:
+            return True if type(self.data) == DataFrame else False
 
     def query_string_change(self):
         if self.data_source in ['mysql', 'postgresql', 'awsredshift', 'googlebigquery']:
@@ -193,9 +202,13 @@ class ABTest:
             self.arguments["parameters"] = self.params
 
     def check_for_mandetory_arguments(self):
-        for arg in self.arg_terminal:
-            if arg in self.mandetory_arguments:
-                return False if self.arguments[arg] is None else True
+        accept = True
+        if self.data is None:
+            for arg in self.arg_terminal:
+                if arg in self.mandetory_arguments:
+                    if self.arguments[arg] is None:
+                        accept = False
+        return accept
 
     def ab_test_init(self):
         """

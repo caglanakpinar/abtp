@@ -75,6 +75,7 @@ def assign_groups_to_results(data, groups, comb):
 class Test:
     def __init__(self,
                  test_groups,
+                 data=None,
                  groups=None,
                  date=None,
                  feature=None,
@@ -87,7 +88,8 @@ class Test:
         self.date = convert_date(date)
         self.start_date = None
         self.time_indicator = time_indicator
-        self.data, self.groups = data_manipulation(date=date,
+        self.data, self.groups = data_manipulation(data_raw=data,
+                                                   date=date,
                                                    time_indicator=time_indicator,
                                                    feature=feature,
                                                    data_source=data_source,

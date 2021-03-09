@@ -17,29 +17,31 @@ except Exception as e:
     from .configs import time_dimensions, day_of_year, time_indicator_accept_threshold, s_size_ratio
 
 
-def data_manipulation(date, time_indicator, feature, data_source, groups, data_query_path, time_period):
-    data_process = GetData(data_source=data_source,
-                           data_query_path=data_query_path,
-                           time_indicator=time_indicator,
-                           feature=feature,
-                           date=date)
-    data_process.data_execute()
-    print("data size :", len(data_process.data))
+def data_manipulation(data_raw, date, time_indicator, feature, data_source, groups, data_query_path, time_period):
+    if data_raw is None:
+        data_process = GetData(data_source=data_source,
+                               data_query_path=data_query_path,
+                               time_indicator=time_indicator,
+                               feature=feature,
+                               date=date)
+        data_process.data_execute()
+        data_raw = data_process.data
+    print("data size :", len(data_raw))
     print("remove null values ..")
-    data_process.data = data_process.data[data_process.data[feature] == data_process.data[feature]]
+    data_raw = data_raw[data_raw[feature] == data_raw[feature]]
     print("check for time part data ..")
-    data, groups = data_process.data, split_groups(groups)
+    data, groups = data_raw, split_groups(groups)
     if time_indicator is not None:
         date_features = TimePartFeatures(job='train',
-                                         data=data_process.data,
+                                         data=data,
                                          time_indicator=time_indicator,
                                          groups=groups,
                                          feature=feature)
         date_features.date_dimension_deciding()
-        data, groups = date_features.data, date_features.groups
+        data_raw, groups = date_features.data, date_features.groups
         if time_period is not None:
-            data[time_period] = data[time_indicator].apply(lambda x: date_part(str(x), time_period))
-    return data, groups
+            data_raw[time_period] = data_raw[time_indicator].apply(lambda x: date_part(str(x), time_period))
+    return data_raw, groups
 
 
 class TimePartFeatures:
@@ -407,7 +409,6 @@ def bayesian_approach(sample1, sample2, dist):
     validation_p_values = stats.beta.rvs(a_val, b_val, size=len(sample2))
     sample_size = min(len(control_p_values), len(validation_p_values))
     wins = validation_p_values[:sample_size] > control_p_values[:sample_size]
-    print(np.mean(wins))
     return np.mean(wins)
 
 

@@ -22,21 +22,22 @@ def main(test_groups,
          time_period=None,
          time_indicator=None,
          export_path=None,
-         parameters=None):
          parameters=None,
          data=None,
+         exporting_data=False):
     print("received :", {'test_groups': test_groups, 'groups': groups, 'date': date,
                          'feature': feature, 'data_source': data_source,
                          'data_query_path': data_query_path, 'time_period': time_period,
                          "time_indicator": time_indicator, "export_path": export_path, "parameters": parameters,
+                         "exporting_data": exporting_data, "data": None}
           )
     print(Test.__init__)
-    ab_test = Test(test_groups=test_groups, groups=groups, date=date, feature=feature,
+    ab_test = Test(data=data, test_groups=test_groups, groups=groups, date=date, feature=feature,
                    data_source=data_source, data_query_path=url_string(data_query_path),
                    time_period=time_period, time_indicator=time_indicator, export_path=export_path, parameters=parameters)
     ab_test.execute()
     print("Done!!")
-    if export_path is None:
+    if exporting_data:
         print("exporting path :", export_path)
         print(ab_test.final_results.head())
         ab_test.final_results.to_csv(get_result_file_name(export_path, date, time_period), index=False)
