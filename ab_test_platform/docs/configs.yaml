@@ -1,5 +1,5 @@
 dash_port: 7003
-data_source:
+data_source: null
 db_connection:
   data_source:
   db:
@@ -10,6 +10,7 @@ db_connection:
 output_file_name: results
 port_ranges: 6000*7000
 prediction_date: 2020-03-01
+schedule_date: null
 server: /tmp/mnt
 train_end_date: 2020-01-01
 web_port: 7002

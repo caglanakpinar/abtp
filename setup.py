@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="abtest",
-    version="0.0.5",
+    version="0.0.6",
     author="Caglan Akpinar",
     author_email="cakpinar23@gmail.com",
     description="allows to run AB Test for any problem, automatically decides which test must be applied and represents the results",
@@ -18,7 +18,9 @@ setuptools.setup(
     packages= find_packages(exclude='__pycache__'),
     py_modules=['ab_test_platform/docs', 'ab_test_platform'],
     install_requires=[
+                      "pytest-shutil >= 1.7.0",
                       "numpy >= 1.18.1",
+                      "multiprocess >= 0.70.9",
                       "pandas >= 0.25.3",
                       "scipy >= 1.4.1 ",
                       "schedule >= 0.6.0",
