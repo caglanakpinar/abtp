@@ -19,6 +19,8 @@ import time
 from os import listdir
 from os.path import dirname, join, abspath
 import pandas as pd
+from multiprocessing import cpu_count
+import threading
 
 try:
     from .configs import weekdays, conf, boostrap_ratio, web_port_default
@@ -343,6 +345,45 @@ def get_result_file_name(path, date, time_period=None):
 
 def get_folder_path():
     return abspath(__file__).split("utils.py")[0]
+
+
+def get_iter_sample(s_values, i, iters, cpus):
+    if i != iters - 1:
+        return s_values[(i * cpus): ((i+1) * cpus)]
+    else:
+        return s_values[(i * cpus):]
+
+
+def execute_parallel_run(values, executor, parallel=2, arguments=None):
+    """
+    main concept of parallelize the processes. It checks the cpu count and multiplies with 4.
+    On each iteration it triggers cpu * 4 threads sequentially.
+    :param values: list of values in order to trigger thread.
+    :param executor: function in order to call
+    :param parallel: number of thread
+    :param arguments: arguments for the function
+    :return:
+    """
+    global process
+    cpus = cpu_count()
+    if parallel < cpus * 4:
+        parallel = cpus * 4
+    iters = int(len(values) / parallel) + 1
+    print("number of iterations :", iters)
+    for i in range(iters):
+        if i % 2 == 0:
+            print("iteration :", i)
+        _sample_values = get_iter_sample(values, i, iters, parallel)
+        for v in _sample_values:
+            if arguments:
+                process = threading.Thread(target=executor, args=(v, arguments, ))
+            else:
+                process = threading.Thread(target=executor, args=(v,))
+            process.deamon = True
+            process.start()
+        process.join()
+    del process
+    return "done !!!"
 
 
 

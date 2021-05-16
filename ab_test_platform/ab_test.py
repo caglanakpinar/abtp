@@ -1,8 +1,9 @@
 import threading
 from multiprocessing import cpu_count
 from os.path import exists, join
+import shutil
 from numpy import arange
-from pandas import DataFrame, concat
+from pandas import DataFrame, concat, read_csv
 
 try:
     from functions import *
@@ -10,7 +11,7 @@ try:
     from configs import hyper_conf, descriptive_columns
 except Exception as e:
     from .functions import *
-    from .utils import split_test_groups, convert_str_to_day
+    from .utils import split_test_groups, convert_str_to_day, execute_parallel_run
     from .configs import hyper_conf, descriptive_columns
 
 
@@ -113,11 +114,12 @@ class Test:
         self.final_results = DataFrame()
         self.h0_accept_ratio = 0
         self.h0_acceptance = 0
+        self.temp_folder = join(abspath(""), "temp_ab_test_results", "")
 
-    def get_query(self):
+    def get_query(self, combination):
         count = 0
         query = ''
-        for c in self.comb:
+        for c in combination:
             if type(c) != str:
                 query += self.groups[count] + ' == ' + str(c) + ' and '
             else:
@@ -133,9 +135,10 @@ class Test:
         query = query[:-4]
         return query
 
-    def get_control_and_active_data(self):
-        self._c = self.f_w_data[self.f_w_data[self.test_groups_field] == self.test_groups_indicator]
-        self._a = self.f_w_data[self.f_w_data[self.test_groups_field] != self.test_groups_indicator]
+    def get_control_and_active_data(self, f_w_data):
+        _c = f_w_data[f_w_data[self.test_groups_field] == self.test_groups_indicator]
+        _a = f_w_data[f_w_data[self.test_groups_field] != self.test_groups_indicator]
+        return _c, _a
 
     def decide_distribution(self):
         _unique = list(self.data[self.feature].unique())
@@ -155,22 +158,29 @@ class Test:
                 self.data_distribution = 'poisson'
         print("Distribution :", self.data_distribution)
 
-    def get_descriptives(self):
-        self.results = self.results.rename(columns=rename_descriptives())
+    def get_descriptives(self, results):
+        return results.rename(columns=rename_descriptives())
 
-    def test_decision(self):
+    def test_decision(self, _results, combination):
+
+        _name = "_".join([c for c in combination]) if len(combination) > 1 else combination[0]
+        _file = join(self.temp_folder, _name.replace(" ", "_") + ".csv")
         if self.is_boostraping_calculation():
-            self.get_descriptives()
-            self.h0_accept_ratio = sum(self.results['h0_accept']) / len(self.results)
-            self.h0_acceptance = True if self.h0_accept_ratio > 0.5 else False
-            self.results['date'] = self.date
-            self.results['test_result'] = self.h0_acceptance
-            self.results['accept_Ratio'] = self.h0_accept_ratio
-            self.results = assign_groups_to_results(self.results, self.groups, self.comb)
-            self.final_results = self.results if self.final_results is None else concat([self.final_results, self.results])
+            _results = self.get_descriptives(_results)
+            h0_accept_ratio = sum(_results['h0_accept']) / len(_results)
+            h0_acceptance = True if self.h0_accept_ratio > 0.5 else False
+            _results['date'] = self.date
+            _results['test_result'] = h0_acceptance
+            _results['accept_Ratio'] = h0_accept_ratio
+            _results = assign_groups_to_results(_results, self.groups, combination)
+
+            try:
+                _results = concat([read_csv(_file, index=False), _results])
+                _results.to_csv(_file, index=False)
+            except Exception as e:
+                _results.to_csv(_file, index=False)
         else:
-            print(self.results.head())
-            self.final_results = self.results
+            _results.to_csv(_file, index=False)
 
     def is_boostraping_calculation(self):
         if self.date is None or self.time_indicator is None:
@@ -185,42 +195,67 @@ class Test:
                 else:
                     return False
 
-    def test_execute(self):
-        self.results = []
-        for self.param_comb in self.parameter_combinations[self.data_distribution]:
-            self._params = get_params(list(hyper_conf('normal').keys()), self.param_comb, self.data)
+    def test_execute(self, _c, _a):
+        results = []
+        for param_comb in self.parameter_combinations[self.data_distribution]:
+            _params = get_params(list(hyper_conf('normal').keys()), param_comb, self.data)
             if self.is_boostraping_calculation():
-                self.results += boostraping_calculation(sample1=list(self._c[self.feature]),
-                                                        sample2=list(self._a[self.feature]),
-                                                        iteration=self._params['iteration'],
-                                                        sample_size=self._params['sample_size'],
-                                                        alpha=1-self._params['confidence_level'],
-                                                        dist=self.data_distribution)
+                results += boostraping_calculation(sample1=list(_c[self.feature]),
+                                                   sample2=list(_a[self.feature]),
+                                                   iteration=_params['iteration'],
+                                                   sample_size=_params['sample_size'],
+                                                   alpha=1-_params['confidence_level'],
+                                                   dist=self.data_distribution)
             else:
-                self.results += bayesian_approach(sample1=list(self._c[self.feature]),
-                                                  sample2=list(self._a[self.feature]), dist=self.data_distribution)
-        self.results = DataFrame(self.results)
+                results += bayesian_approach(sample1=list(_c[self.feature]),
+                                             sample2=list(_a[self.feature]), dist=self.data_distribution)
+        return DataFrame(results)
 
     def check_for_time_period(self):
         return True if self.time_period is None else False
 
-    def run_test(self):
+    def run_test(self, combination):
         try:
-            self.f_w_data = self.data.query(self.get_query())
-            if len(self.f_w_data) != 0:
-                print("*" * 4, "AB TEST - ", self.get_query().replace(" and ", "; ").replace(" == ", " - "), "*" * 4)
-                print("data size :", len(self.f_w_data))
-                self.get_control_and_active_data()
-                self.test_execute()
-                self.test_decision()
+            f_w_data = self.data.query(self.get_query(combination))
+            if len(f_w_data) != 0:
+                _c, _a = self.get_control_and_active_data(f_w_data)
+                _results = self.test_execute(_c, _a)
+                self.test_decision(_results, combination)
         except Exception as e:
             print(e)
 
     def execute(self):
+        print(self.temp_folder)
+        try:
+            os.mkdir(self.temp_folder)
+        except Exception as e:
+            print(e)
+            print("recreating 'temp_results' folder ...")
+            shutil.rmtree(self.temp_folder)
+            os.mkdir(self.temp_folder)
+
         print("time period :", self.time_period)
         self.decide_distribution()
-        for self.comb in self.levels:
-            self.run_test()
+        print(self.levels)
+        iters = int(len(self.levels) / 1024) + 1
+        for i in range(iters):
+            print("main iteration :", str(i), " / ", str(iters))
+            _sample_levels = get_iter_sample(self.levels, i, iters, 1024)
+            execute_parallel_run(_sample_levels, self.run_test, arguments=None, parallel=8)
+
+        for comb in listdir(dirname(self.temp_folder)):
+            try:
+                self.final_results = concat([self.final_results, read_csv(join(self.temp_folder, comb))])
+            except Exception as e:
+                print(e)
+                print(comb)
+
+        try:
+            shutil.rmtree(self.temp_folder)
+        except Exception as e:
+            print(e)
+
+
 
 
 
