@@ -114,7 +114,9 @@ class Test:
         self.final_results = DataFrame()
         self.h0_accept_ratio = 0
         self.h0_acceptance = 0
-        self.temp_folder = join(abspath(""), "temp_ab_test_results", "")
+        self.temp_folder = join(abspath(""), "temp_ab_test_results", "") if export_path is None else join(export_path,
+                                                                                                          "temp_ab_test_results",
+                                                                                                          "")
 
     def get_query(self, combination):
         count = 0
@@ -222,21 +224,18 @@ class Test:
                 _results = self.test_execute(_c, _a)
                 self.test_decision(_results, combination)
         except Exception as e:
-            print(e)
+            print("running test results error :", e)
 
     def execute(self):
-        print(self.temp_folder)
         try:
             os.mkdir(self.temp_folder)
         except Exception as e:
-            print(e)
             print("recreating 'temp_results' folder ...")
             shutil.rmtree(self.temp_folder)
             os.mkdir(self.temp_folder)
 
         print("time period :", self.time_period)
         self.decide_distribution()
-        print(self.levels)
         iters = int(len(self.levels) / 1024) + 1
         for i in range(iters):
             print("main iteration :", str(i), " / ", str(iters))
@@ -247,13 +246,12 @@ class Test:
             try:
                 self.final_results = concat([self.final_results, read_csv(join(self.temp_folder, comb))])
             except Exception as e:
-                print(e)
-                print(comb)
+                pass
 
         try:
             shutil.rmtree(self.temp_folder)
         except Exception as e:
-            print(e)
+            pass
 
 
 
