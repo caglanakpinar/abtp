@@ -180,7 +180,6 @@ class Test:
                 _results = concat([read_csv(_file, index=False), _results])
                 _results.to_csv(_file, index=False)
             except Exception as e:
-                print("cccc :")
                 _results.to_csv(_file, index=False)
         else:
             _results.to_csv(_file, index=False)
@@ -225,21 +224,18 @@ class Test:
                 _results = self.test_execute(_c, _a)
                 self.test_decision(_results, combination)
         except Exception as e:
-            print(e)
+            print("run test error :", e)
 
     def execute(self):
-        print(self.temp_folder)
         try:
             os.mkdir(self.temp_folder)
         except Exception as e:
-            print(e)
             print("recreating 'temp_results' folder ...")
             shutil.rmtree(self.temp_folder)
             os.mkdir(self.temp_folder)
 
         print("time period :", self.time_period)
         self.decide_distribution()
-        print(self.levels)
         iters = int(len(self.levels) / 1024) + 1
         for i in range(iters):
             print("main iteration :", str(i), " / ", str(iters))
@@ -250,15 +246,12 @@ class Test:
             try:
                 self.final_results = concat([self.final_results, read_csv(join(self.temp_folder, comb))])
             except Exception as e:
-                print("bbbb :")
-                print(e)
-                print(comb)
+                pass
 
         try:
             shutil.rmtree(self.temp_folder)
         except Exception as e:
-            print("aaaaa :")
-            print(e)
+            pass
 
 
 
