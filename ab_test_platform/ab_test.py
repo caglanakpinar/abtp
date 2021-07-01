@@ -114,7 +114,9 @@ class Test:
         self.final_results = DataFrame()
         self.h0_accept_ratio = 0
         self.h0_acceptance = 0
-        self.temp_folder = join(abspath(""), "temp_ab_test_results", "")
+        self.temp_folder = join(abspath(""), "temp_ab_test_results", "") if export_path is None else join(export_path,
+                                                                                                          "temp_ab_test_results",
+                                                                                                          "")
 
     def get_query(self, combination):
         count = 0
@@ -178,6 +180,7 @@ class Test:
                 _results = concat([read_csv(_file, index=False), _results])
                 _results.to_csv(_file, index=False)
             except Exception as e:
+                print("cccc :")
                 _results.to_csv(_file, index=False)
         else:
             _results.to_csv(_file, index=False)
@@ -247,12 +250,14 @@ class Test:
             try:
                 self.final_results = concat([self.final_results, read_csv(join(self.temp_folder, comb))])
             except Exception as e:
+                print("bbbb :")
                 print(e)
                 print(comb)
 
         try:
             shutil.rmtree(self.temp_folder)
         except Exception as e:
+            print("aaaaa :")
             print(e)
 
 
