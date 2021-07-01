@@ -224,7 +224,7 @@ class Test:
                 _results = self.test_execute(_c, _a)
                 self.test_decision(_results, combination)
         except Exception as e:
-            print("run test error :", e)
+            print("running test results error :", e)
 
     def execute(self):
         try:
